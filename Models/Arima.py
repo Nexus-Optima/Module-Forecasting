@@ -7,22 +7,22 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 # Load your time series data into a pandas DataFrame
 # Replace 'your_data.csv' with your actual data file or source
-data = pd.read_csv('your_data.csv')
+data = pd.read_csv('../Data/ICAC Data.csv')
 # Assuming you have a 'date' column in your DataFrame, convert it to a datetime object
-data['date'] = pd.to_datetime(data['date'])
+data['Date'] = pd.to_datetime(data['Date'])
 # Set the 'date' column as the index
-data.set_index('date', inplace=True)
+data.set_index('Date', inplace=True)
 
 # Plot the time series data to visualize it
 plt.figure(figsize=(12, 6))
 plt.plot(data)
 plt.title('Time Series Data')
 plt.xlabel('Date')
-plt.ylabel('Value')
+plt.ylabel('Cotlook_A_Index')
 plt.show()
 
 # Check for stationarity using the Augmented Dickey-Fuller test
-result = adfuller(data['value'])
+result = adfuller(data['Cotlook_A_index'])
 print('ADF Statistic:', result[0])
 print('p-value:', result[1])
 print('Critical Values:')
@@ -85,5 +85,3 @@ plt.xlabel('Date')
 plt.ylabel('Value')
 plt.legend()
 plt.show()
->>>>>>> 0c665f5 (Added ICAC data and basic code for Arima)
->>>>>>> 4cea0d1 (Added ICAC data and basic code for Arima)
