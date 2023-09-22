@@ -1,87 +1,58 @@
-import numpy as np
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.metrics import mean_squared_error
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-# Load your time series data into a pandas DataFrame
-# Replace 'your_data.csv' with your actual data file or source
-data = pd.read_csv('../Data/ICAC Data.csv')
-# Assuming you have a 'date' column in your DataFrame, convert it to a datetime object
-data['Date'] = pd.to_datetime(data['Date'])
-# Set the 'date' column as the index
-data.set_index('Date', inplace=True)
+def evaluate_arima_model(train, test, order):
+    model = ARIMA(train, order=order)
+    model_fit = model.fit()
+    predictions = model_fit.forecast(steps=len(test))
+    mse = mean_squared_error(test, predictions)
+    rmse = np.sqrt(mse)
+    return rmse
 
-# Plot the time series data to visualize it
-plt.figure(figsize=(12, 6))
-plt.plot(data)
-plt.title('Time Series Data')
-plt.xlabel('Date')
-plt.ylabel('Cotlook_A_Index')
-plt.show()
+df = pd.read_csv('../Data/ICAC Data.csv')
+df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
+df.set_index('Date', inplace=True)
+df.sort_index(inplace=True)
+df.head()
+train_size = int(0.8 * len(df))
+train, test = df['Cotlook_A_index'][:train_size], df['Cotlook_A_index'][train_size:]
+best_rmse = float('inf')
+best_order = None
+p_values = [0, 1, 2]
+d_values = [0, 1]
+q_values = [0, 1, 2]
 
-# Check for stationarity using the Augmented Dickey-Fuller test
-result = adfuller(data['Cotlook_A_index'])
-print('ADF Statistic:', result[0])
-print('p-value:', result[1])
-print('Critical Values:')
-for key, value in result[4].items():
-    print(f'{key}: {value}')
+for p in p_values:
+    for d in d_values:
+        for q in q_values:
+            order = (p, d, q)
+            try:
+                rmse = evaluate_arima_model(train, test, order)
+                if rmse < best_rmse:
+                    best_rmse = rmse
+                    best_order = order
+            except:
+                continue
 
-# If the time series is not stationary, perform differencing
-if result[1] > 0.05:
-    data_diff = data.diff().dropna()
-else:
-    data_diff = data
+model = ARIMA(df['Cotlook_A_index'], order=best_order)
+model_fit = model.fit()
+forecast = model_fit.forecast(steps=100)
+print(forecast)
 
-# Plot ACF and PACF to determine the order of AR and MA components
-plt.figure(figsize=(12, 6))
-plot_acf(data_diff, lags=40)
-plt.title('Autocorrelation Function (ACF)')
-plt.show()
-
-plt.figure(figsize=(12, 6))
-plot_pacf(data_diff, lags=40)
-plt.title('Partial Autocorrelation Function (PACF)')
-plt.show()
-
-# Fit an ARIMA model
-p = 1  # Order of AR
-d = 1  # Degree of differencing
-q = 1  # Order of MA
-
-model = sm.tsa.ARIMA(data_diff, order=(p, d, q))
-results = model.fit()
-
-# Print the model summary
-print(results.summary())
-
-# Plot the residuals
-residuals = results.resid
-plt.figure(figsize=(12, 6))
-plt.plot(residuals)
-plt.title('Residuals')
-plt.xlabel('Date')
-plt.ylabel('Residual Value')
-plt.show()
-
-# Make predictions with the ARIMA model
-forecast_steps = 10  # Number of steps to forecast into the future
-forecast = results.forecast(steps=forecast_steps)
-
-# Create a date range for the forecasted values
-forecast_index = pd.date_range(start=data.index[-1], periods=forecast_steps+1, closed='right')
-
-# Convert forecast values to a DataFrame
-forecast_df = pd.DataFrame(data=forecast, index=forecast_index, columns=['Forecast'])
-
-# Plot the original data and the forecast
-plt.figure(figsize=(12, 6))
-plt.plot(data, label='Original Data')
-plt.plot(forecast_df, label='Forecast', color='red')
-plt.title('Original Data vs. Forecast')
-plt.xlabel('Date')
-plt.ylabel('Value')
+plt.figure(figsize=(14, 7))
+plt.plot(df['Cotlook_A_index'], label="Actual Data")
+forecast_index = pd.date_range(df.index[-1], periods=101, inclusive='right')
+plt.plot(forecast_index, forecast, 'r--', label="10-day Forecast")
+plt.title("Cotlook A Index with 10 Days Forecast")
+plt.xlabel("Date")
+plt.ylabel("Cotlook A Index")
 plt.legend()
+plt.grid(True)
+plt.tight_layout()
 plt.show()
+
+print(best_rmse)
+print(best_order)
