@@ -10,7 +10,7 @@ lags = [1, 2, 3, 7, 14, 21, 28]
 for lag in lags:
     data_multivar[f"lag_{lag}"] = data_multivar['Cotlook_A_index'].shift(lag)
 
-window_sizes = [7, 14, 21, 28]
+window_sizes = [14, 21, 28]
 for window in window_sizes:
     data_multivar[f"rolling_mean_{window}"] = data_multivar['Cotlook_A_index'].rolling(window=window).mean()
     data_multivar[f"rolling_std_{window}"] = data_multivar['Cotlook_A_index'].rolling(window=window).std()
@@ -34,15 +34,11 @@ cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
 num_components_95 = np.where(cumulative_variance >= 0.95)[0][0] + 1
 print(num_components_95)
 
-pc1_loadings = pca.components_[0]
-pc1_values = features.dot(pc1_loadings).sort_index()
-print(pc1_values)
+pca_values_df = pd.DataFrame()
 
-pc2_loadings = pca.components_[1]
-pc2_values = features.dot(pc2_loadings).sort_index()
-print(pc2_values)
-
-pc3_loadings = pca.components_[2]
-pc3_values = features.dot(pc3_loadings).sort_index()
-print(pc3_values)
-
+for i in range(num_components_95):
+    loadings = pca.components_[i]
+    pc_values = features.dot(loadings)
+    pca_values_df[f"PC{i+1}"] = pc_values
+pca_values_sorted = pca_values_df.sort_index()
+print(pca_values_sorted)
