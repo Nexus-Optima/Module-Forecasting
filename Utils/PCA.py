@@ -18,6 +18,16 @@ for window in window_sizes:
 data_multivar_fe = data_multivar.dropna()
 
 features = data_multivar_fe.drop(columns=["Output"])
+data_multivar[f"lag_{lag}"] = data_multivar['Cotlook_A_index'].shift(lag)
+
+window_sizes = [14, 21, 28]
+for window in window_sizes:
+    data_multivar[f"rolling_mean_{window}"] = data_multivar['Cotlook_A_index'].rolling(window=window).mean()
+    data_multivar[f"rolling_std_{window}"] = data_multivar['Cotlook_A_index'].rolling(window=window).std()
+
+data_multivar_fe = data_multivar.dropna()
+
+features = data_multivar_fe.drop(columns=["Cotlook_A_index"])
 pca = PCA(n_components=10)
 pca.fit(features)
 
