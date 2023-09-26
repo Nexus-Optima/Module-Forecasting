@@ -18,7 +18,7 @@ df.set_index('Date', inplace=True)
 df.sort_index(inplace=True)
 df.head()
 train_size = int(0.8 * len(df))
-train, test = df['Cotlook_A_index'][:train_size], df['Cotlook_A_index'][train_size:]
+train, test = df['Output'][:train_size], df['Output'][train_size:]
 best_rmse = float('inf')
 best_order = None
 p_values = [0, 1, 2]
@@ -37,16 +37,16 @@ for p in p_values:
             except:
                 continue
 
-model = ARIMA(df['Cotlook_A_index'], order=best_order)
+model = ARIMA(df['Output'], order=best_order)
 model_fit = model.fit()
 forecast = model_fit.forecast(steps=100)
 print(forecast)
 
 plt.figure(figsize=(14, 7))
-plt.plot(df['Cotlook_A_index'], label="Actual Data")
+plt.plot(df['Output'], label="Actual Data")
 forecast_index = pd.date_range(df.index[-1], periods=101, inclusive='right')
-plt.plot(forecast_index, forecast, 'r--', label="10-day Forecast")
-plt.title("Cotlook A Index with 10 Days Forecast")
+plt.plot(forecast_index, forecast, 'r--', label="Forecast")
+plt.title("Cotlook A Index Forecast")
 plt.xlabel("Date")
 plt.ylabel("Cotlook A Index")
 plt.legend()
@@ -56,5 +56,3 @@ plt.show()
 
 print(best_rmse)
 print(best_order)
-
-print('abc')
