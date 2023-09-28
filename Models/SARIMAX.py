@@ -10,20 +10,20 @@ df.sort_index(inplace=True)
 
 lags = [1, 2, 3, 7, 14, 21, 28]
 for lag in lags:
-    df[f"lag_{lag}"] = df['Cotlook_A_index'].shift(lag)
+    df[f"lag_{lag}"] = df['Output'].shift(lag)
 
 window_sizes = [7, 14, 21, 28]
 for window in window_sizes:
-    df[f"rolling_mean_{window}"] = df['Cotlook_A_index'].rolling(window=window).mean()
-    df[f"rolling_std_{window}"] = df['Cotlook_A_index'].rolling(window=window).std()
+    df[f"rolling_mean_{window}"] = df['Output'].rolling(window=window).mean()
+    df[f"rolling_std_{window}"] = df['Output'].rolling(window=window).std()
 
 df_fe = df.dropna()
 
 train_size = int(0.8 * len(df_fe))
 train, test = df_fe.iloc[:train_size], df_fe.iloc[train_size:]
 
-X_train, X_test = train.drop("Cotlook_A_index", axis=1), test.drop("Cotlook_A_index", axis=1)
-y_train, y_test = train["Cotlook_A_index"], test["Cotlook_A_index"]
+X_train, X_test = train.drop("Output", axis=1), test.drop("Output", axis=1)
+y_train, y_test = train["Output"], test["Output"]
 
 sarimax_model = SARIMAX(y_train, exog=X_train, order=(1, 1, 1), seasonal_order=(1, 1, 1, 365))
 sarimax_result = sarimax_model.fit(disp=False)
@@ -40,7 +40,7 @@ sarimax_forecast_45 = sarimax_result.get_forecast(steps=45, exog=exog_forecast).
 print(sarimax_forecast_45)
 
 plt.figure(figsize=(16, 8))
-plt.plot(df['Cotlook_A_index'], label="Actual Data", color="blue")
+plt.plot(df['Output'], label="Actual Data", color="blue")
 plt.plot(y_test.index, sarimax_predictions, label="SARIMAX Predictions", color="red", linestyle="--")
 forecast_index_45 = pd.date_range(df.index[-1], periods=46, inclusive='right')
 plt.plot(forecast_index_45, sarimax_forecast_45, 'g--', label="45-day SARIMAX Forecast", alpha=0.7)
