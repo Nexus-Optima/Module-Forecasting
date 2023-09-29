@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from Evaluation.XGBoostEvaluation import getPredictions
 from Utils.process_data import process_data_lagged, process_data
-from Utils.plot_signals import plot_buy_sell_entire_data, plot_predicted_data
+from Utils.plot_signals import plot_predicted_data
 
 data = pd.read_csv("../Data/ICAC multiple variables.csv", parse_dates=['Date'], dayfirst=True)
 data = process_data(data)
@@ -51,4 +51,3 @@ plt.grid(True)
 plt.show()
 
 plot_predicted_data(predictions, subset_data, predicted_output, future_data, window_size)
-plot_buy_sell_entire_data(subset_data)
