@@ -1,12 +1,19 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+from Utils.process_data import process_data_lagged
 
-data = pd.read_csv('../../Data/ICAC multiple variables.csv')
-correlations_no_date = data.drop(columns='Date').corr()['Output'].drop('Output')
-plt.figure(figsize=(12, 6))
-correlations_no_date.sort_values().plot(kind='bar', color='skyblue')
-plt.title('Feature Correlation with Output (Excluding Date)')
-plt.ylabel('Correlation Coefficient')
-plt.xlabel('Features')
-plt.tight_layout()
+data = pd.read_csv("../../Data/ICAC multiple variables.csv", parse_dates=['Date'], dayfirst=True)
+data = process_data_lagged(data)
+correlation_matrix = data.corr()
+plt.figure(figsize=(15, 10))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title("Correlation Analysis")
+plt.show()
+
+correlation_with_output = data.corr()['Output']
+correlation_with_output.drop('Output', inplace=True)
+correlation_with_output.sort_values().plot(kind='barh', figsize=(10, 8))
+plt.title('Correlation of Features with Output')
+plt.xlabel('Correlation Coefficient')
 plt.show()

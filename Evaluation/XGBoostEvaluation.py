@@ -1,18 +1,15 @@
 import xgboost as xgb
-import pandas as pd
 from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
-
+from Utils.process_data import process_data, process_data_lagged, process_data_lagged_rolling_stats
+import pandas as pd
 predictions = []
 actual_values = []
 
 def executeEvaluation():
     data = pd.read_csv("../Data/ICAC multiple variables.csv", parse_dates=['Date'], dayfirst=True)
-    data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
-    data.set_index('Date', inplace=True)
-    data = data.resample('D').mean().fillna(method='ffill')
+    data = process_data(data)
     subset_data = data.last('2Y')
-
     window_size = int(0.5 * len(subset_data))
     for window_start in range(0, len(subset_data) - window_size):
         train_data = subset_data.iloc[window_start:window_start + window_size]
