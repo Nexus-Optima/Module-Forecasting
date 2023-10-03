@@ -6,9 +6,8 @@ import pandas as pd
 predictions = []
 actual_values = []
 
-def executeEvaluation():
-    data = pd.read_csv("../Data/ICAC multiple variables.csv", parse_dates=['Date'], dayfirst=True)
-    data = process_data(data)
+
+def executeEvaluation(data):
     subset_data = data.last('2Y')
     window_size = int(0.5 * len(subset_data))
     for window_start in range(0, len(subset_data) - window_size):
@@ -42,6 +41,6 @@ def executeEvaluation():
     print(adaptive_mae)
 
 
-def getPredictions():
-    executeEvaluation()
+def getPredictions(data):
+    executeEvaluation(data)
     return actual_values, predictions
