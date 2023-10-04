@@ -2,16 +2,15 @@ import pandas as pd
 
 
 def process_data(data):
-    data = data
     data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
     data.set_index('Date', inplace=True)
-    data = data.resample('D').mean().fillna(method='ffill')
+    data = data.resample('D').mean().ffill()
     return data
 
 
 def process_data_lagged(data):
     data = process_data(data)
-    lags = [1, 7, 30]
+    lags = [7, 30, 365]
     for col in data.columns:
         for lag in lags:
             data[f"{col}_lag{lag}"] = data[col].shift(lag)
