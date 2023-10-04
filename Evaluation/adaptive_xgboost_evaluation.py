@@ -1,14 +1,11 @@
 import xgboost as xgb
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
-from Utils.process_data import process_data, process_data_lagged, process_data_lagged_rolling_stats
-import pandas as pd
 predictions = []
 actual_values = []
 
 
-def executeEvaluation(data):
-    subset_data = data.last('2Y')
+def executeEvaluation(subset_data):
     window_size = int(0.5 * len(subset_data))
     for window_start in range(0, len(subset_data) - window_size):
         train_data = subset_data.iloc[window_start:window_start + window_size]
@@ -17,7 +14,7 @@ def executeEvaluation(data):
         X_train, y_train = train_data.drop(columns='Output'), train_data['Output']
         X_val, y_val = val_data.drop(columns='Output'), val_data['Output']
 
-        model = xgb.XGBRegressor(n_estimators=50, max_depth=10, n_jobs=-1, objective='reg:squarederror',
+        model = xgb.XGBRegressor(n_estimators=50, max_depth=5, n_jobs=-1, objective='reg:squarederror',
                                  random_state=42)
         model.fit(X_train, y_train)
 
@@ -38,9 +35,11 @@ def executeEvaluation(data):
     plt.tight_layout()
     plt.show()
     adaptive_mae = mean_absolute_error(actual_values, predictions)
+    adaptive_mse = mean_squared_error(actual_values, predictions)
+    print(adaptive_mse)
     print(adaptive_mae)
 
 
-def getPredictions(data):
-    executeEvaluation(data)
+def getPredictions(subset_data):
+    executeEvaluation(subset_data)
     return actual_values, predictions
