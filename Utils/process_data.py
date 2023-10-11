@@ -10,7 +10,7 @@ def process_data(data):
 
 def process_data_lagged(data):
     data = process_data(data)
-    lags = [7, 30, 365]
+    lags = [1, 5, 7, 30]
     for col in data.columns:
         for lag in lags:
             data[f"{col}_lag{lag}"] = data[col].shift(lag)

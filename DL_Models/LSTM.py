@@ -44,10 +44,10 @@ def create_dataset(dataset, look_back):
 
 def execute_lstm(data):
     data = data.reset_index()
-    data.drop(columns=['Date', 'Year', 'Month', 'Day', 'Season'], inplace=True)
+    data.drop(columns=['Date'], inplace=True)
     scaled_data, data_min, data_max = min_max_scaler(data.values)
     train_data, test_data = train_test_split(scaled_data, test_size=0.2, shuffle=False)
-    look_back = 5
+    look_back = 7
 
     X_train, y_train = create_dataset(train_data, look_back)
     X_test, y_test = create_dataset(test_data, look_back)
@@ -57,7 +57,7 @@ def execute_lstm(data):
     X_test_tensor = torch.FloatTensor(X_test)
     y_test_tensor = torch.FloatTensor(y_test)
 
-    model = LSTMModel(input_size=X_train.shape[2], hidden_size=90, num_layers=3, output_size=1)
+    model = LSTMModel(input_size=X_train.shape[2], hidden_size=50, num_layers=3, output_size=1)
     criterion = nn.MSELoss(reduction='mean')
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -95,7 +95,6 @@ def execute_lstm(data):
             new_row = np.hstack([last_data[-1, 1:], prediction_reshaped])
             last_data = np.vstack([last_data, new_row])
     forecast_orig = inverse_min_max_scaler(np.array(forecast).reshape(-1, 1), data_min[0], data_max[0])
-    print(forecast_orig)
 
     all_actual = np.concatenate([y_train_orig, y_test_orig])
     all_predictions = np.concatenate([train_predictions_orig, test_predictions_orig])
