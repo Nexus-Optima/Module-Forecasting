@@ -2,19 +2,18 @@ import xgboost as xgb
 import pandas as pd
 import matplotlib.pyplot as plt
 from Evaluation.adaptive_xgboost_evaluation import getPredictions
-from Utils.process_data import process_data_lagged, process_data
 from Utils.plot_signals import plot_predicted_data
 
 
 def execute_adaptive_xgboost(data):
-    subset_data = data.last('2Y')
+    subset_data = data.last('3Y')
     window_size = int(0.5 * len(subset_data))
-    actual_values, predictions = getPredictions(data)
+    actual_values, predictions = getPredictions(subset_data)
 
     train_data = subset_data[-window_size:]
     X_train, y_train = train_data.drop(columns='Output'), train_data['Output']
 
-    model_future = xgb.XGBRegressor(n_estimators=50, max_depth=10, n_jobs=-1, objective='reg:squarederror',
+    model_future = xgb.XGBRegressor(n_estimators=50, max_depth=5, n_jobs=-1, objective='reg:squarederror',
                                     random_state=42)
     model_future.fit(X_train, y_train)
 

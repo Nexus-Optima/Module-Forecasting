@@ -8,8 +8,9 @@ def evaluate_time_series_decomposition(data):
     result.plot()
     plt.tight_layout()
     plt.show()
-    
-    selected_features = ['IMPTS', 'S/MU', 'Year']
+    selected_features = []
+    for i in data:
+        selected_features.append(i)
     fig, axes = plt.subplots(nrows=len(selected_features), ncols=1, figsize=(14, 12))
     
     for idx, feature in enumerate(selected_features):
