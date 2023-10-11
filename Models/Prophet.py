@@ -3,42 +3,36 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
-from prophet.diagnostics import cross_validation
 
 def execute_prophet(data):
-    data.sort_index()
-    print(data.head())
-    data.columns = ['ds', 'y']
-    data['ds'] = pd.to_datetime(data['ds'])
-    
+    data = data.reset_index()
+    data.rename(columns={"Date": "ds", "Output": "y"}, inplace=True)
+
     test_size = int(0.2 * len(data))
     train_size = len(data) - test_size
-    test, train = data[:test_size], data[test_size:]
-    
+    train, test = data[:train_size], data[train_size:]
+
     model = Prophet()
     model.fit(train)
-    modelFuture = Prophet()
-    modelFuture.fit(data)
-    future_dates = model.make_future_dataframe(periods=len(test))
-    future_dates = future_dates[train_size:]
-    future_dates_final = modelFuture.make_future_dataframe(periods=100)
-    forecast = model.predict(future_dates)
-    forecastFinal = modelFuture.predict(future_dates_final)
-    print(forecast.head())
-    print(forecastFinal.head())
-    print(test.head())
-    print(len(test))
-    print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+    future_dates = model.make_future_dataframe(periods=test_size)
+    forecast = model.predict(future_dates[-test_size:])
+
+    model_future = Prophet()
+    model_future.fit(data)
+    future_dates_final = model_future.make_future_dataframe(periods=100)
+    forecast_final = model_future.predict(future_dates_final[-100:])
+
     plt.figure(figsize=(14, 7))
-    
-    # model.plot(forecast['yhat'], uncertainty=True)
+
     plt.plot(train['ds'], train['y'], label="Training Data", color="blue")
     plt.plot(test['ds'], test['y'], label="Test Data", color="green")
     plt.plot(forecast['ds'], forecast['yhat'], 'r--', label="Predicted Test Data", alpha=0.7)
-    plt.plot(forecastFinal['ds'], forecastFinal['yhat'], 'y', label="100-day Forecast (Adjusted)", alpha=0.7)
+    plt.plot(forecast_final['ds'], forecast_final['yhat'], 'y', label="100-day Forecast", alpha=0.7)
+
     plt.legend()
-    model.plot_components(forecast)
-    modelFuture.plot_components((forecastFinal))
+    plt.title("Time Series Forecasting with Prophet")
     plt.show()
-    rmse = np.sqrt(mean_squared_error(test, forecast))
-    print(rmse)
+
+    rmse = np.sqrt(mean_squared_error(test['y'], forecast['yhat'].head(test_size)))
+    print(f"RMSE: {rmse}")
+

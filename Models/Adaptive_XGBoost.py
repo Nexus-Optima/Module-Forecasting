@@ -6,7 +6,7 @@ from Utils.plot_signals import plot_predicted_data
 
 
 def execute_adaptive_xgboost(data):
-    subset_data = data.last('3Y')
+    subset_data = data.last('2Y')
     window_size = int(0.5 * len(subset_data))
     actual_values, predictions = getPredictions(subset_data)
 
@@ -49,5 +49,5 @@ def execute_adaptive_xgboost(data):
     plt.grid(True)
     plt.show()
 
-    plot_predicted_data(predictions, subset_data, predicted_output, future_data, window_size)
-    return predicted_output
+    # plot_predicted_data(predictions, subset_data, predicted_output, future_data, window_size)
+    return predictions
