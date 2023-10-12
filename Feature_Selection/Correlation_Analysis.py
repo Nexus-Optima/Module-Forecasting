@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
-from Utils.process_data import process_data_lagged
+
+threshold = 0.5
 
 
 def evaluate_correlation_analysis(data):
@@ -17,3 +17,8 @@ def evaluate_correlation_analysis(data):
     plt.title('Correlation of Features with Output')
     plt.xlabel('Correlation Coefficient')
     plt.show()
+
+    selected_features = correlation_with_output[correlation_with_output.abs() > threshold].index.tolist()
+    selected_df = data[['Output'] + selected_features]
+
+    return selected_df
