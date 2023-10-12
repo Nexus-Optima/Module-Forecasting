@@ -45,7 +45,7 @@ def execute_purchase_strategy(predicted_prices, actual_prices, daily_consumption
     ori_days_to_buy, ori_purchase_quantities = purchase_strategy(actual_prices)
 
     total_predicted_price = sum(
-        pred_purchase_quantities[i] * predicted_prices[pred_days_to_buy[i]] for i in range(len(pred_days_to_buy)))
+        pred_purchase_quantities[i] * actual_prices[pred_days_to_buy[i]] for i in range(len(pred_days_to_buy)))
     total_actual_price = sum(
         ori_purchase_quantities[i] * actual_prices[ori_days_to_buy[i]] for i in range(len(ori_days_to_buy)))
     result = (total_predicted_price - total_actual_price) / total_actual_price
