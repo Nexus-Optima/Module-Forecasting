@@ -1,11 +1,11 @@
 import xgboost as xgb
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
-predictions = []
-actual_values = []
 
 
 def executeEvaluation(subset_data):
+    predictions = []
+    actual_values = []
     window_size = int(0.5 * len(subset_data))
     # TODO: Function called time_series_split exists which can be used !!
     for window_start in range(0, len(subset_data) - window_size):
@@ -40,7 +40,9 @@ def executeEvaluation(subset_data):
     print(adaptive_mse)
     print(adaptive_mae)
 
+    return actual_values, predictions
+
 
 def getPredictions(subset_data):
-    executeEvaluation(subset_data)
+    actual_values, predictions = executeEvaluation(subset_data)
     return actual_values, predictions

@@ -17,15 +17,15 @@ from Evaluation.adaptive_xgboost_evaluation import getPredictions
 
 def forecast_pipeline():
     processed_data, actual_data = read_data()
-    features_dataset = create_features_dataset(processed_data)
+    features_dataset = create_features_dataset(processed_data.copy())
 
-    execute_ets(processed_data)
-    execute_arima(processed_data)
-    execute_lstm(processed_data)
-    actual_prices, predicted_prices = getPredictions(processed_data)
-    execute_adaptive_xgboost(processed_data)
-    execute_prophet(processed_data)
-    predicted_prices = execute_lgbm(processed_data)
+    execute_ets(processed_data.copy())
+    execute_arima(processed_data.copy())
+    execute_lstm(processed_data.copy())
+    actual_prices, predicted_prices = getPredictions(processed_data.copy())
+    execute_adaptive_xgboost(processed_data.copy())
+    execute_prophet(processed_data.copy())
+    predicted_prices = execute_lgbm(processed_data.copy())
 
     # Execute Purchase Strategy
     execute_purchase_strategy(predicted_prices, actual_data, 10, 0, 400)
@@ -43,7 +43,7 @@ def create_features_dataset(processed_data):
 
 
 def read_data():
-    data = pd.read_csv("../Data/ICAC multiple variables.csv", dayfirst=True, parse_dates=['Date'])
+    data = pd.read_csv("../Data/ICAC multiple variables.csv", dayfirst=True)
     processed_data = process_data_lagged(data)
     test = processed_data['Output'][int(0.8 * len(processed_data)):]
 
