@@ -17,7 +17,7 @@ def execute_adaptive_xgboost(data):
                                     random_state=42)
     model_future.fit(X_train, y_train)
 
-    future_dates = [subset_data.index[-1] + pd.Timedelta(days=i) for i in range(1, 91)]
+    future_dates = [subset_data.index[-1] + pd.Timedelta(days=i) for i in range(1, 46)]
     future_data = pd.DataFrame(index=future_dates)
     future_data['Day'] = [date.day for date in future_dates]
     future_data['Month'] = [date.month for date in future_dates]
@@ -26,10 +26,11 @@ def execute_adaptive_xgboost(data):
     for col in data.columns:
         if col not in ['Day', 'Month', 'Year', 'Output']:
             future_data[col] = data[col].iloc[-1]
+    print(future_data)
     future_data = future_data[X_train.columns]
     predicted_output = []
 
-    for i in range(90):
+    for i in range(45):
         prediction = model_future.predict(future_data.iloc[[i]].drop(columns='Output', errors='ignore'))
         future_data.loc[future_data.index[i], 'Output'] = prediction[0]
         predicted_output.append(prediction[0])

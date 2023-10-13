@@ -11,7 +11,8 @@ def process_data(data):
 def process_data_lagged(data):
     data = process_data(data)
     lags = [1, 5, 7, 30]
-    for col in data.columns:
+    columns_to_lag = [col for col in data.columns if col != 'Output']
+    for col in columns_to_lag:
         for lag in lags:
             data[f"{col}_lag{lag}"] = data[col].shift(lag)
     data.dropna(inplace=True)
@@ -28,3 +29,8 @@ def process_data_lagged_rolling_stats(data):
 
     data.dropna(inplace=True)
     return data
+
+
+'''
+Add Expanding Window (IF NEEDED)
+'''
