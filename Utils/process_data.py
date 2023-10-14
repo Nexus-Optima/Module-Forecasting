@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def process_data(data):
-    data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
+    data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
     data.set_index('Date', inplace=True)
     data = data.resample('D').mean().ffill()
     return data
@@ -10,11 +10,17 @@ def process_data(data):
 
 def process_data_lagged(data):
     data = process_data(data)
-    lags = [1, 5, 7, 30]
-    columns_to_lag = [col for col in data.columns if col != 'Output']
-    for col in columns_to_lag:
+    lags = [7, 15, 30]
+
+    lagged_columns = []
+
+    for col in data.columns:
         for lag in lags:
-            data[f"{col}_lag{lag}"] = data[col].shift(lag)
+            lag_col_name = f"{col}_lag{lag}"
+            if lag_col_name not in data.columns:
+                lagged_columns.append(data[col].shift(lag).rename(lag_col_name))
+
+    data = pd.concat([data] + lagged_columns, axis=1)
     data.dropna(inplace=True)
     return data
 

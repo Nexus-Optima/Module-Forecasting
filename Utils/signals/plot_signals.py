@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from Utils.generate_signals import generate_signals, modified_generate_signals
+from Utils.signals.generate_signals import modified_generate_signals
 
 
 def plot_predicted_data(predictions, subset_data, predicted_output, future_data, window_size):

@@ -12,8 +12,6 @@ from Models.LightGBM import execute_lgbm
 
 from DL_Models.LSTM import execute_lstm
 
-from Evaluation.adaptive_xgboost_evaluation import getPredictions
-
 
 def forecast_pipeline():
     processed_data, actual_data = read_data()
@@ -22,8 +20,7 @@ def forecast_pipeline():
     execute_ets(processed_data.copy())
     execute_arima(processed_data.copy())
     execute_lstm(processed_data.copy())
-    actual_prices, predicted_prices = getPredictions(processed_data.copy())
-    execute_adaptive_xgboost(processed_data.copy())
+    execute_adaptive_xgboost(features_dataset.copy(), 7)
     execute_prophet(processed_data.copy())
     predicted_prices = execute_lgbm(processed_data.copy())
 
@@ -43,7 +40,7 @@ def create_features_dataset(processed_data):
 
 
 def read_data():
-    data = pd.read_csv("../Data/ICAC multiple variables.csv", dayfirst=True)
+    data = pd.read_csv("../Data/Price_Data.csv", dayfirst=True)
     processed_data = process_data_lagged(data)
     test = processed_data['Output'][int(0.8 * len(processed_data)):]
 

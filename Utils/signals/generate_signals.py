@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+
 
 def generate_signals(data):
     short_window = 5
