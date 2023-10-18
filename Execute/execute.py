@@ -20,7 +20,7 @@ from DL_Models.LSTM import execute_lstm
 def forecast_pipeline():
     processed_data, actual_data = read_data()
     features_dataset = create_features_dataset(processed_data.copy())
-    features_dataset.last('4Y')
+    features_dataset.last('3Y')
 
     # execute_ets(processed_data.copy())
     # execute_arima(processed_data.copy())
@@ -50,7 +50,7 @@ def read_data():
         return pd.to_datetime(date_string, format='%m/%d/%y')
 
     data = pd.read_csv('../Data/Price_Data.csv', parse_dates=['Date'], date_parser=custom_date_parser)
-    processed_data = process_data_lagged_rolling_stats(data, 20)
+    processed_data = process_data_lagged_rolling_stats(data, 15)
     cols_to_remove = (set(processed_data.columns) & set(data.columns)) - {"Output"}
     processed_data = processed_data.drop(columns=cols_to_remove)
     test = processed_data['Output'][int(0.8 * len(processed_data)):]
