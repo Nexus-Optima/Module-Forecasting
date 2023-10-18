@@ -123,11 +123,17 @@ def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
         if i < forecast_days - 1:
             concatenated_data.reset_index(inplace=True, drop=False)
             concatenated_data.rename(columns={'index': 'Date'}, inplace=True)
-            concatenated_data = process_data_lagged_rolling_stats(concatenated_data, 20)
+            concatenated_data = process_data_lagged_rolling_stats(concatenated_data, forecast_days)
 
-            num_rows_to_update = min(len(future_data.iloc[i + 1:]), len(concatenated_data.iloc[-(forecast_days - i):]))
-            # Update the future data with the new lags
-            future_data.iloc[i + 1:i + 1 + num_rows_to_update] = concatenated_data.iloc[-num_rows_to_update:]
+            future_data_cols = future_data.columns.tolist()
+
+            relevant_rows = concatenated_data.iloc[-(forecast_days - i):].copy()
+            relevant_rows = relevant_rows[future_data_cols]
+
+            num_rows_to_update = min(len(future_data.iloc[i + 1:]), len(relevant_rows))
+            future_data.iloc[i + 1:i + 1 + num_rows_to_update] = relevant_rows.iloc[:num_rows_to_update].values
+
+        print(future_data.to_string())
 
     past_dates = subset_data.index[window_size:window_size + len(predictions)]
     future_dates_list = future_data.index.tolist()

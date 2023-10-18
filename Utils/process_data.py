@@ -11,7 +11,7 @@ def process_data(data):
 
 def process_data_lagged(data, forecast_days):
     data = process_data(data)
-    lags = [1, 5, 7, 15, 30]
+    lags = [1, 5, 7, 15, 30, 60]
 
     lagged_columns = []
 
