@@ -11,8 +11,7 @@ from Models.LightGBM import execute_lgbm
 
 from DL_Models.LSTM import execute_lstm
 
-correlation_methods = [evaluate_correlation_analysis, evaluate_spearman_correlation_analysis,
-                       evaluate_recursive_feature_elimination]
+correlation_methods = [evaluate_correlation_analysis, evaluate_spearman_correlation_analysis]
 
 forecasting_models = [execute_adaptive_xgboost, execute_arima, execute_ets, execute_prophet, execute_lgbm,
                       execute_lstm]

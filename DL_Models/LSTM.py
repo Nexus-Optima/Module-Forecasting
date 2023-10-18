@@ -4,6 +4,7 @@ import torch.optim as optim
 import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+import pandas as pd
 
 class LSTMModel(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, output_size):
@@ -44,6 +45,7 @@ def create_dataset(dataset, look_back):
 
 def execute_lstm(data):
     data = data.reset_index()
+    dates = data['Date'].values
     data.drop(columns=['Date'], inplace=True)
     scaled_data, data_min, data_max = min_max_scaler(data.values)
     train_data, test_data = train_test_split(scaled_data, test_size=0.2, shuffle=False)
@@ -61,7 +63,7 @@ def execute_lstm(data):
     criterion = nn.MSELoss(reduction='mean')
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 50
+    num_epochs = 300
     train_losses, test_losses = [], []
 
     for epoch in range(num_epochs):
@@ -85,8 +87,10 @@ def execute_lstm(data):
     test_mse = np.mean((test_predictions_orig - y_test_orig) ** 2)
 
     forecast = []
+    forecast_dates = []
     last_data = scaled_data[-look_back:]
-    for _ in range(45):
+    last_date = pd.to_datetime(dates[-1])
+    for _ in range(20):
         with torch.no_grad():
             model.eval()
             prediction = model(torch.FloatTensor(last_data[-look_back:].reshape(1, look_back, -2)))
@@ -94,6 +98,8 @@ def execute_lstm(data):
             prediction_reshaped = prediction.numpy().flatten()
             new_row = np.hstack([last_data[-1, 1:], prediction_reshaped])
             last_data = np.vstack([last_data, new_row])
+        last_date += pd.Timedelta(days=1)
+        forecast_dates.append(last_date)
     forecast_orig = inverse_min_max_scaler(np.array(forecast).reshape(-1, 1), data_min[0], data_max[0])
 
     all_actual = np.concatenate([y_train_orig, y_test_orig])
@@ -110,5 +116,7 @@ def execute_lstm(data):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+    print(pd.DataFrame(forecast_orig, columns=['Forecast'], index=forecast_dates))
 
     return forecast_orig

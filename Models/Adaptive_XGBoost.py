@@ -1,11 +1,11 @@
 import xgboost as xgb
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import pandas as pd
-from Utils.process_data import process_data_lagged
+from Utils.process_data import process_data_lagged, process_data_lagged_rolling_stats
 from Utils.visualise_graph import plot_graph
 
 
-def execute_evaluation(subset_data):
+def execute_evaluation(subset_data, hyperparams):
     """
     Evaluate the XGBoost model on the provided data. Uses a moving window approach.
 
@@ -20,9 +20,17 @@ def execute_evaluation(subset_data):
     actual_values = []
     window_size = int(0.5 * len(subset_data))
 
-    model = xgb.XGBRegressor(n_estimators=300, max_depth=5, n_jobs=-1,
-                             objective='reg:squarederror', random_state=42,
-                             early_stopping_rounds=50, eval_metric="rmse", verbose=50)
+    model = xgb.XGBRegressor(
+        n_estimators=hyperparams['n_estimators'],
+        max_depth=hyperparams['max_depth'],
+        learning_rate=hyperparams['learning_rate'],
+        subsample=hyperparams['subsample'],
+        colsample_bytree=hyperparams['colsample_bytree'],
+        n_jobs=-1,
+        objective='reg:squarederror',
+        random_state=42,
+        early_stopping_rounds=50
+    )
 
     # Moving window approach to train and validate the model
     for window_start in range(0, len(subset_data) - window_size):
@@ -45,7 +53,7 @@ def execute_evaluation(subset_data):
     return actual_values, predictions
 
 
-def execute_adaptive_xgboost(data, forecast_days):
+def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
     """
     Execute adaptive XGBoost on the given dataset to predict future values.
 
@@ -57,23 +65,29 @@ def execute_adaptive_xgboost(data, forecast_days):
     - predictions (list): List of predicted values.
     """
 
-    # Take the last 3 years of data for processing
-    subset_data = data.last('3Y')
-
     # Determine the window size as half the length of the subset data
     window_size = int(0.5 * len(subset_data))
 
     # Retrieve actual values and predictions for the subset data
-    actual_values, predictions = execute_evaluation(subset_data)
+    actual_values, predictions = execute_evaluation(subset_data, hyperparams)
 
     # Split the data into training sets
     train_data = subset_data[-window_size:]
     X_train, y_train = train_data.drop(columns='Output'), train_data['Output']
 
     # Initialize the XGBoost model
-    model_future = xgb.XGBRegressor(n_estimators=250, max_depth=5, n_jobs=-1, objective='reg:squarederror',
-                                    random_state=42)
-    model_future.fit(X_train, y_train, verbose=True)
+    model_future = xgb.XGBRegressor(
+        n_estimators=hyperparams['n_estimators'],
+        max_depth=hyperparams['max_depth'],
+        learning_rate=hyperparams['learning_rate'],
+        subsample=hyperparams['subsample'],
+        colsample_bytree=hyperparams['colsample_bytree'],
+        n_jobs=-1,
+        objective='reg:squarederror',
+        random_state=42,
+        early_stopping_rounds=50
+    )
+    model_future.fit(X_train, y_train, eval_set=[(X_train, y_train)])
 
     # Generate future dates for prediction
     future_dates = [subset_data.index[-1] + pd.Timedelta(days=i) for i in range(1, forecast_days + 1)]
@@ -109,7 +123,7 @@ def execute_adaptive_xgboost(data, forecast_days):
         if i < forecast_days - 1:
             concatenated_data.reset_index(inplace=True, drop=False)
             concatenated_data.rename(columns={'index': 'Date'}, inplace=True)
-            concatenated_data = process_data_lagged(concatenated_data)
+            concatenated_data = process_data_lagged_rolling_stats(concatenated_data, 20)
 
             num_rows_to_update = min(len(future_data.iloc[i + 1:]), len(concatenated_data.iloc[-(forecast_days - i):]))
             # Update the future data with the new lags

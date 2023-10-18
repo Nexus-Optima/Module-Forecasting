@@ -5,28 +5,30 @@ def process_data(data):
     data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
     data.set_index('Date', inplace=True)
     data = data.resample('D').mean().ffill()
+    data.sort_index(inplace=True)
     return data
 
 
-def process_data_lagged(data):
+def process_data_lagged(data, forecast_days):
     data = process_data(data)
-    lags = [7, 15, 30]
+    lags = [1, 5, 7, 15, 30]
 
     lagged_columns = []
 
     for col in data.columns:
         for lag in lags:
-            lag_col_name = f"{col}_lag{lag}"
-            if lag_col_name not in data.columns:
-                lagged_columns.append(data[col].shift(lag).rename(lag_col_name))
+            if lag >= forecast_days:
+                lag_col_name = f"{col}_lag{lag}"
+                if lag_col_name not in data.columns:
+                    lagged_columns.append(data[col].shift(lag).rename(lag_col_name))
 
     data = pd.concat([data] + lagged_columns, axis=1)
     data.dropna(inplace=True)
     return data
 
 
-def process_data_lagged_rolling_stats(data):
-    data = process_data_lagged(data)
+def process_data_lagged_rolling_stats(data, forecast_days):
+    data = process_data_lagged(data, forecast_days)
     window_sizes = [3, 14, 30]
 
     for window in window_sizes:
