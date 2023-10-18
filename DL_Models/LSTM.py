@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+import pandas as pd
 import torch.optim as optim
 import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-import pandas as pd
+from Utils.process_data import process_data, process_data_lagged
 
 class LSTMModel(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, output_size):
@@ -43,14 +44,14 @@ def create_dataset(dataset, look_back):
     return np.array(dataX), np.array(dataY)
 
 
-def execute_lstm(data):
+def execute_lstm(data, forecast):
+    data = data.last('3Y')
     data = data.reset_index()
-    dates = data['Date'].values
     data.drop(columns=['Date'], inplace=True)
+    data.dropna(inplace=True)
     scaled_data, data_min, data_max = min_max_scaler(data.values)
     train_data, test_data = train_test_split(scaled_data, test_size=0.2, shuffle=False)
     look_back = 7
-
     X_train, y_train = create_dataset(train_data, look_back)
     X_test, y_test = create_dataset(test_data, look_back)
 
@@ -59,11 +60,11 @@ def execute_lstm(data):
     X_test_tensor = torch.FloatTensor(X_test)
     y_test_tensor = torch.FloatTensor(y_test)
 
-    model = LSTMModel(input_size=X_train.shape[2], hidden_size=50, num_layers=3, output_size=1)
+    model = LSTMModel(input_size=X_train.shape[2], hidden_size=100, num_layers=3, output_size=1)
     criterion = nn.MSELoss(reduction='mean')
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 300
+    num_epochs = 500
     train_losses, test_losses = [], []
 
     for epoch in range(num_epochs):
@@ -82,26 +83,43 @@ def execute_lstm(data):
     y_train_orig = inverse_min_max_scaler(y_train, data_min[0], data_max[0])
     test_predictions_orig = inverse_min_max_scaler(test_predictions, data_min[0], data_max[0])
     y_test_orig = inverse_min_max_scaler(y_test, data_min[0], data_max[0])
-
     train_mse = np.mean((train_predictions_orig - y_train_orig) ** 2)
     test_mse = np.mean((test_predictions_orig - y_test_orig) ** 2)
-
+    print("Train rmse is ")
+    print(train_mse)
+    print("Test rmse is ")
+    print(test_mse)
+    raw_data = pd.read_csv("../Data/Price_Data.csv", dayfirst=True)
+    raw_data = process_data(raw_data)
+    future_dates = pd.date_range('2023-10-12', '2023-11-11')
+    future_data = pd.DataFrame(index=future_dates)
+    future_data.index.name = 'Date'
+    combined_data = pd.concat([raw_data, future_data])
+    combined_data = combined_data.reset_index()
+    combined_data = process_data_lagged(combined_data, forecast)
+    combined_data = combined_data.last('3Y')
+    combined_data = combined_data.reset_index()
+    combined_data.drop(columns=['Date'], inplace=True)
+    # remove NaN values to perform proper scaling
+    combined_data.dropna(inplace=True)
+    combined_data = combined_data[data.columns]
+    scaled_forecast_data, future_data_min, future_data_max = min_max_scaler(combined_data.values)
     forecast = []
-    forecast_dates = []
     last_data = scaled_data[-look_back:]
-    last_date = pd.to_datetime(dates[-1])
-    for _ in range(20):
+    print(last_data)
+    for i in range(len(future_data)):
         with torch.no_grad():
             model.eval()
             prediction = model(torch.FloatTensor(last_data[-look_back:].reshape(1, look_back, -2)))
             forecast.append(prediction.item())
-            prediction_reshaped = prediction.numpy().flatten()
-            new_row = np.hstack([last_data[-1, 1:], prediction_reshaped])
+            scaled_forecast_data[i-len(future_data)][0] = prediction.item()
+            # remove NaN values to perform proper scaling
+            new_row = scaled_forecast_data[i-len(future_data)]
+            print(last_data)
+            print(new_row)
             last_data = np.vstack([last_data, new_row])
-        last_date += pd.Timedelta(days=1)
-        forecast_dates.append(last_date)
-    forecast_orig = inverse_min_max_scaler(np.array(forecast).reshape(-1, 1), data_min[0], data_max[0])
-
+    forecast_orig = inverse_min_max_scaler(np.array(forecast).reshape(-1, 1), future_data_min[0], future_data_max[0])
+    print(forecast_orig)
     all_actual = np.concatenate([y_train_orig, y_test_orig])
     all_predictions = np.concatenate([train_predictions_orig, test_predictions_orig])
     time_array = np.arange(len(all_actual) + len(forecast_orig))
@@ -116,7 +134,5 @@ def execute_lstm(data):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-
-    print(pd.DataFrame(forecast_orig, columns=['Forecast'], index=forecast_dates))
 
     return forecast_orig
