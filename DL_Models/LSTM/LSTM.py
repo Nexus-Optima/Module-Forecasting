@@ -6,65 +6,30 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from Utils.process_data import process_data, process_data_lagged
-
-class LSTMModel(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_size):
-        super(LSTMModel, self).__init__()
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
-
-    def forward(self, x):
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_()
-        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_()
-
-        out, (hn, cn) = self.lstm(x, (h0.detach(), c0.detach()))
-        out = self.fc(out[:, -1, :])
-        return out
+from DL_Models.LSTM.lstm_structure import LSTMModel
+from DL_Models.LSTM import lstm_utils
 
 
-def min_max_scaler(data):
-    min_val = np.min(data, axis=0)
-    max_val = np.max(data, axis=0)
-    return (data - min_val) / (max_val - min_val), min_val, max_val
-
-
-def inverse_min_max_scaler(scaled_data, min_val, max_val):
-    return scaled_data * (max_val - min_val) + min_val
-
-
-def create_dataset(dataset, look_back):
-    dataX, dataY = [], []
-    for i in range(len(dataset) - look_back):
-        a = dataset[i:(i + look_back), :]
-        dataX.append(a)
-        dataY.append(dataset[i + look_back, 0])
-    return np.array(dataX), np.array(dataY)
-
-
-def execute_lstm(data, forecast):
-    data = data.last('3Y')
+def execute_lstm(data, forecast, hyperparameters):
     data = data.reset_index()
     data.drop(columns=['Date'], inplace=True)
     data.dropna(inplace=True)
-    scaled_data, data_min, data_max = min_max_scaler(data.values)
+    scaled_data, data_min, data_max = lstm_utils.min_max_scaler(data.values)
     train_data, test_data = train_test_split(scaled_data, test_size=0.2, shuffle=False)
     look_back = 7
-    X_train, y_train = create_dataset(train_data, look_back)
-    X_test, y_test = create_dataset(test_data, look_back)
+    X_train, y_train = lstm_utils.create_dataset(train_data, look_back)
+    X_test, y_test = lstm_utils.create_dataset(test_data, look_back)
 
     X_train_tensor = torch.FloatTensor(X_train)
     y_train_tensor = torch.FloatTensor(y_train)
     X_test_tensor = torch.FloatTensor(X_test)
     y_test_tensor = torch.FloatTensor(y_test)
 
-    model = LSTMModel(input_size=X_train.shape[2], hidden_size=100, num_layers=3, output_size=1)
+    model = LSTMModel(input_size=X_train.shape[2], hyperparameters=hyperparameters)
     criterion = nn.MSELoss(reduction='mean')
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=hyperparameters['lr'], weight_decay=hyperparameters['weight_decay'])
 
-    num_epochs = 500
+    num_epochs = hyperparameters['num_epochs']
     train_losses, test_losses = [], []
 
     for epoch in range(num_epochs):
@@ -79,17 +44,17 @@ def execute_lstm(data, forecast):
     train_predictions = model(X_train_tensor).detach().numpy()
     test_predictions = model(X_test_tensor).detach().numpy()
 
-    train_predictions_orig = inverse_min_max_scaler(train_predictions, data_min[0], data_max[0])
-    y_train_orig = inverse_min_max_scaler(y_train, data_min[0], data_max[0])
-    test_predictions_orig = inverse_min_max_scaler(test_predictions, data_min[0], data_max[0])
-    y_test_orig = inverse_min_max_scaler(y_test, data_min[0], data_max[0])
+    train_predictions_orig = lstm_utils.inverse_min_max_scaler(train_predictions, data_min[0], data_max[0])
+    y_train_orig = lstm_utils.inverse_min_max_scaler(y_train, data_min[0], data_max[0])
+    test_predictions_orig = lstm_utils.inverse_min_max_scaler(test_predictions, data_min[0], data_max[0])
+    y_test_orig = lstm_utils.inverse_min_max_scaler(y_test, data_min[0], data_max[0])
     train_mse = np.mean((train_predictions_orig - y_train_orig) ** 2)
     test_mse = np.mean((test_predictions_orig - y_test_orig) ** 2)
     print("Train rmse is ")
     print(train_mse)
     print("Test rmse is ")
     print(test_mse)
-    raw_data = pd.read_csv("../Data/Price_Data.csv", dayfirst=True)
+    raw_data = pd.read_csv("../../Data/Price_Data.csv", dayfirst=True)
     raw_data = process_data(raw_data)
     future_dates = pd.date_range('2023-10-12', '2023-11-11')
     future_data = pd.DataFrame(index=future_dates)
@@ -103,7 +68,7 @@ def execute_lstm(data, forecast):
     # remove NaN values to perform proper scaling
     combined_data.dropna(inplace=True)
     combined_data = combined_data[data.columns]
-    scaled_forecast_data, future_data_min, future_data_max = min_max_scaler(combined_data.values)
+    scaled_forecast_data, future_data_min, future_data_max = lstm_utils.min_max_scaler(combined_data.values)
     forecast = []
     last_data = scaled_data[-look_back:]
     print(last_data)
@@ -112,13 +77,14 @@ def execute_lstm(data, forecast):
             model.eval()
             prediction = model(torch.FloatTensor(last_data[-look_back:].reshape(1, look_back, -2)))
             forecast.append(prediction.item())
-            scaled_forecast_data[i-len(future_data)][0] = prediction.item()
+            scaled_forecast_data[i - len(future_data)][0] = prediction.item()
             # remove NaN values to perform proper scaling
-            new_row = scaled_forecast_data[i-len(future_data)]
+            new_row = scaled_forecast_data[i - len(future_data)]
             print(last_data)
             print(new_row)
             last_data = np.vstack([last_data, new_row])
-    forecast_orig = inverse_min_max_scaler(np.array(forecast).reshape(-1, 1), future_data_min[0], future_data_max[0])
+    forecast_orig = lstm_utils.inverse_min_max_scaler(np.array(forecast).reshape(-1, 1), future_data_min[0],
+                                                      future_data_max[0])
     print(forecast_orig)
     all_actual = np.concatenate([y_train_orig, y_test_orig])
     all_predictions = np.concatenate([train_predictions_orig, test_predictions_orig])

@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
-def execute_prophet(data):
+
+def execute_prophet(data, forecast_days):
     data = data.reset_index()
     data.rename(columns={"Date": "ds", "Output": "y"}, inplace=True)
 
@@ -19,8 +20,8 @@ def execute_prophet(data):
 
     model_future = Prophet()
     model_future.fit(data)
-    future_dates_final = model_future.make_future_dataframe(periods=100)
-    forecast_final = model_future.predict(future_dates_final[-100:])
+    future_dates_final = model_future.make_future_dataframe(periods=forecast_days)
+    forecast_final = model_future.predict(future_dates_final[-forecast_days:])
 
     plt.figure(figsize=(14, 7))
 
@@ -35,4 +36,4 @@ def execute_prophet(data):
 
     rmse = np.sqrt(mean_squared_error(test['y'], forecast['yhat'].head(test_size)))
     print(f"RMSE: {rmse}")
-
+    return forecast_final
