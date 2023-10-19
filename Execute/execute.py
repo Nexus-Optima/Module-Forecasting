@@ -1,4 +1,9 @@
+import io
+import os
+
 import pandas as pd
+import boto3
+from dotenv import load_dotenv
 
 # Importing necessary constants and parameters.
 import Constants.constants as cts
@@ -62,6 +67,7 @@ def create_features_dataset(processed_data):
 
 def read_data():
     """Function to read and process the data."""
+
     def custom_date_parser(date_string):
         return pd.to_datetime(date_string, format='%m/%d/%y')
 
@@ -74,4 +80,27 @@ def read_data():
     return processed_data, test
 
 
+def read_data_s3(BUCKET_NAME, FILE_NAME):
+    """Function to read and process the data from an S3 bucket."""
+    def custom_date_parser(date_string):
+        return pd.to_datetime(date_string, format='%m/%d/%y')
+
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+    csv_obj = s3_client.get_object(Bucket=BUCKET_NAME, Key=FILE_NAME)
+    body = csv_obj['Body']
+
+    data = pd.read_csv(io.BytesIO(body.read()), parse_dates=['Date'], date_parser=custom_date_parser)
+
+    processed_data = process_data_lagged_rolling_stats(data, prms.FORECASTING_DAYS)
+    cols_to_remove = (set(processed_data.columns) & set(data.columns)) - {"Output"}
+    processed_data = processed_data.drop(columns=cols_to_remove)
+    test = processed_data['Output'][int(0.8 * len(processed_data)):]
+
+    return processed_data, test
+
+
+load_dotenv()
 forecast_pipeline()
