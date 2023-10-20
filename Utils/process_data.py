@@ -4,14 +4,14 @@ import pandas as pd
 def process_data(data):
     data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
     data.set_index('Date', inplace=True)
-    data = data.resample('D').mean().ffill()
     data.sort_index(inplace=True)
+    data = data.ffill()
     return data
 
 
 def process_data_lagged(data, forecast_days):
     data = process_data(data)
-    lags = [1, 5, 7, 15, 30, 60]
+    lags = [1, 5, 7, 15, 30]
 
     lagged_columns = []
 

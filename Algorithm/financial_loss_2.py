@@ -1,18 +1,15 @@
 import pandas as pd
-from Models.ETS import execute_ets
-from Models.Adaptive_XGBoost import execute_adaptive_xgboost
-from Models.Adaptive_XGBoost import execute_evaluation
-from Models.Arima import execute_arima
-from Utils.process_data import process_data, process_data_lagged, process_data_lagged_rolling_stats
+from Models.XG_Boost.adaptive_xgboost import execute_evaluation
+from Utils.process_data import process_data_lagged_rolling_stats
 
 dailyConsumption = 10
 maxDays = 40
 
 data = pd.read_csv("../Data/ICAC multiple variables.csv", parse_dates=['Date'], dayfirst=True)
-data = process_data_lagged_rolling_stats(data)
+data = process_data_lagged_rolling_stats(data, 10)
 data = data.last('5Y')
 # prophet_pred = execute_prophet(data)
-test, adaptive_xgb_pred  = execute_evaluation(data)
+test, adaptive_xgb_pred  = execute_evaluation(data, hyperparams={})
 # arima_pred, arima_forecast = execute_arima(data)
 # print(prophet_pred)
 # train_size = int(0.8 * len(data))

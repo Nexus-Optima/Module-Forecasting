@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def evaluate_arima_model(train, test, order):
     model = ARIMA(train, order=order)
     model_fit = model.fit()
@@ -11,7 +12,9 @@ def evaluate_arima_model(train, test, order):
     mse = mean_squared_error(test, predictions)
     rmse = np.sqrt(mse)
     return predictions, rmse
-def execute_arima(data):
+
+
+def execute_arima(data, forecast_days):
     data.sort_index(inplace=True)
     data.head()
     train_size = int(0.8 * len(data))
@@ -22,7 +25,7 @@ def execute_arima(data):
     p_values = [0, 1, 2, 3, 4]
     d_values = [0, 1, 2, 3]
     q_values = [0, 1, 2, 3]
-    
+
     for p in p_values:
         for d in d_values:
             for q in q_values:
@@ -35,14 +38,14 @@ def execute_arima(data):
                         best_predictions = predictions
                 except:
                     continue
-    
+
     model = ARIMA(data['Output'], order=best_order)
     model_fit = model.fit()
-    forecast = model_fit.forecast(steps=45)
-    
+    forecast = model_fit.forecast(steps=forecast_days)
+
     plt.figure(figsize=(14, 7))
     plt.plot(data['Output'], label="Actual Data")
-    forecast_index = pd.date_range(data.index[-1], periods=46, inclusive='right')
+    forecast_index = pd.date_range(data.index[-1], periods=forecast_days + 1, inclusive='right')
     plt.plot(forecast_index, forecast, 'r--', label="Forecast")
     plt.title("Cotlook A Index Forecast")
     plt.xlabel("Date")

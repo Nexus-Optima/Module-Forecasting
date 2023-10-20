@@ -142,4 +142,4 @@ def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
 
     print(future_data['Output'])
 
-    return predictions
+    return predictions, future_data['Output']

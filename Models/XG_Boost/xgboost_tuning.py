@@ -58,7 +58,7 @@ def objective(trial, data):
     return mse
 
 
-def tune_hyperparameters(data, n_trials=100):
+def tune_xgboost_hyperparameters(data, n_trials=100):
     study = optuna.create_study(direction="minimize")
     study.optimize(lambda trial: objective(trial, data), n_trials=n_trials)
 
