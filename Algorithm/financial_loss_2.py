@@ -3,9 +3,10 @@ from Models.XG_Boost.adaptive_xgboost import execute_evaluation, execute_adaptiv
 from Utils.process_data import process_data_lagged_rolling_stats
 import Constants.parameters as prms
 
-def execute_purchase_strategy_v2(data,dailyConsumption, maxDays, forecast_days):
 
-    actual_values, predictions, forecast, adaptive_xgb_pred  = execute_adaptive_xgboost(data, forecast_days, hyperparams=prms.xgboost_params_4Y)
+def execute_purchase_strategy_v2(data, dailyConsumption, maxDays, forecast_days):
+    actual_values, predictions, forecast = execute_adaptive_xgboost(data, forecast_days,
+                                                                    hyperparams=prms.xgboost_params_4Y)
 
     def optimum_purchase(pred):
         curStock = 0
@@ -24,7 +25,6 @@ def execute_purchase_strategy_v2(data,dailyConsumption, maxDays, forecast_days):
                     break
             curStock -= 1
         return stockStatement
-
 
     def compute_purchase_cost(stockStatement):
         stockToBuy = stockStatement[0]

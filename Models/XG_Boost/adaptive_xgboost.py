@@ -37,10 +37,17 @@ def execute_evaluation(subset_data, hyperparams):
         train_data = subset_data.iloc[window_start:window_start + window_size]
         val_data = subset_data.iloc[window_start + window_size:window_start + window_size + 1]
 
-        X_train, y_train = train_data.drop(columns='Output'), train_data['Output']
-        X_val, y_val = val_data.drop(columns='Output'), val_data['Output']
+        X_train = train_data.drop(columns='Output')
+        X_train = X_train[[col for col in X_train.columns if '_lag' in col]]
+
+        X_val = val_data.drop(columns='Output')
+        X_val = X_val[[col for col in X_val.columns if '_lag' in col]]
+
+        y_train = train_data['Output']
+        y_val = val_data['Output']
 
         model.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_val, y_val)])
+        trained_feature_order = X_train.columns.tolist()
 
         predictions.extend(model.predict(X_val))
         actual_values.extend(y_val.values)
@@ -50,7 +57,7 @@ def execute_evaluation(subset_data, hyperparams):
     print(mean_squared_error(actual_values, predictions))
     print(mean_absolute_error(actual_values, predictions))
 
-    return actual_values, predictions
+    return actual_values, predictions, trained_feature_order
 
 
 def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
@@ -69,11 +76,12 @@ def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
     window_size = int(0.5 * len(subset_data))
 
     # Retrieve actual values and predictions for the subset data
-    actual_values, predictions = execute_evaluation(subset_data, hyperparams)
+    actual_values, predictions, feature_order = execute_evaluation(subset_data, hyperparams)
 
     # Split the data into training sets
     train_data = subset_data[-window_size:]
     X_train, y_train = train_data.drop(columns='Output'), train_data['Output']
+    X_train = X_train[[col for col in X_train.columns if '_lag' in col]]
 
     # Initialize the XGBoost model
     model_future = xgb.XGBRegressor(
@@ -104,6 +112,7 @@ def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
     # Iterate over each forecast day and predict values
     for i in range(forecast_days):
         X_next = future_data.iloc[[i]].drop(columns='Output', errors='ignore')
+        X_next = X_next[feature_order]
 
         # Convert object columns to numeric
         for col in X_next.columns:
@@ -142,4 +151,4 @@ def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
 
     print(future_data['Output'])
 
-    return predictions, future_data['Output']
+    return actual_values, predictions, future_data['Output'],
