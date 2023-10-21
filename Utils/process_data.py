@@ -13,16 +13,16 @@ def process_data_lagged(data, forecast_days):
     data = process_data(data)
     lags = [1, 5, 7, 15, 30]
 
-    lagged_columns = []
+    for col in data.columns:
+        if "_lag" in col:
+            data.drop(col, axis=1, inplace=True)
 
     for col in data.columns:
         for lag in lags:
             if lag >= forecast_days:
                 lag_col_name = f"{col}_lag{lag}"
-                if lag_col_name not in data.columns:
-                    lagged_columns.append(data[col].shift(lag).rename(lag_col_name))
+                data[lag_col_name] = data[col].shift(lag)
 
-    data = pd.concat([data] + lagged_columns, axis=1)
     data.dropna(inplace=True)
     return data
 
