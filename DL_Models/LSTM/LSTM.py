@@ -54,7 +54,7 @@ def execute_lstm(data, forecast, hyperparameters):
     print(train_mse)
     print("Test rmse is ")
     print(test_mse)
-    raw_data = pd.read_csv("../../Data/Price_Data.csv", dayfirst=True)
+    raw_data = pd.read_csv("../Data/Price_Data.csv", dayfirst=True)
     raw_data = process_data(raw_data)
     future_dates = pd.date_range('2023-10-12', '2023-11-11')
     future_data = pd.DataFrame(index=future_dates)
@@ -62,7 +62,7 @@ def execute_lstm(data, forecast, hyperparameters):
     combined_data = pd.concat([raw_data, future_data])
     combined_data = combined_data.reset_index()
     combined_data = process_data_lagged(combined_data, forecast)
-    combined_data = combined_data.last('3Y')
+    combined_data = combined_data.last('4Y')
     combined_data = combined_data.reset_index()
     combined_data.drop(columns=['Date'], inplace=True)
     # remove NaN values to perform proper scaling
