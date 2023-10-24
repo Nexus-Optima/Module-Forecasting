@@ -27,6 +27,7 @@ from DL_Models.LSTM.lstm_tuning import tune_lstm_hyperparameters
 
 # Importing financial loss version 2
 from Algorithm.financial_loss_2 import execute_purchase_strategy_v2
+from Algorithm.financial_loss import execute_purchase_strategy
 
 
 def forecast_pipeline():
@@ -40,20 +41,22 @@ def forecast_pipeline():
     features_dataset.last('4Y')
 
     'TUNE HYPER-PARAMETERS'
-    # params, actual_data, predictions = tune_xgboost_hyperparameters(features_dataset)
+    params, actual_data, predictions = tune_xgboost_hyperparameters(features_dataset)
     lstm_params = tune_lstm_hyperparameters(features_dataset.copy(), no_trials=100)
-    # lstm_params = prms.lstm_parameters_4Y
+    lstm_params = prms.lstm_parameters_4Y
+
     'EXECUTE MODELS'
     sarimax_forecast = execute_sarimax(features_dataset.copy(), prms.FORECASTING_DAYS)
     prophet_forecast = execute_prophet(features_dataset.copy(), prms.FORECASTING_DAYS)
     ets_predictions = execute_ets(features_dataset.copy(), prms.FORECASTING_DAYS)
     lstm_forecast = execute_lstm(features_dataset.copy(), prms.FORECASTING_DAYS, lstm_params)
-    xgboost_predictions, xgboost_forecast = execute_adaptive_xgboost(features_dataset.copy(), prms.FORECASTING_DAYS, prms.xgboost_params_4Y)
+    execute_adaptive_xgboost(features_dataset.copy(), prms.FORECASTING_DAYS, prms.xgboost_params_4Y)
     lgbm_predictions, lgbm_forecast = execute_lgbm(processed_data.copy(), prms.FORECASTING_DAYS)
 
     'EXECUTE PURCHASE STRATEGY'
-    # execute_purchase_strategy(lgbm_predictions, actual_data, 10, 0, 400)
-    # execute_purchase_strategy_v2(features_dataset.copy(),2330,40,prms.FORECASTING_DAYS)
+    execute_purchase_strategy(lgbm_predictions, actual_data, 10, 0, 400)
+    execute_purchase_strategy_v2(features_dataset.copy(), 23350, 40, prms.FORECASTING_DAYS)
+
 
 def create_features_dataset(processed_data):
     """Function to create a dataset using selected features based on correlation methods."""
@@ -75,8 +78,8 @@ def read_data():
 
     data = pd.read_csv('../Data/Price_Data.csv', parse_dates=['Date'], date_parser=custom_date_parser)
     processed_data = process_data_lagged(data, prms.FORECASTING_DAYS)
-    cols_to_remove = (set(processed_data.columns) & set(data.columns)) - {"Output"}
-    processed_data = processed_data.drop(columns=cols_to_remove)
+    # cols_to_remove = (set(processed_data.columns) & set(data.columns)) - {"Output"}
+    # processed_data = processed_data.drop(columns=cols_to_remove)
     test = processed_data['Output'][int(0.8 * len(processed_data)):]
 
     return processed_data, test
