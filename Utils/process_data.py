@@ -32,8 +32,8 @@ def process_data_lagged_rolling_stats(data, forecast_days):
     window_sizes = [3, 14, 30]
 
     for window in window_sizes:
-        data[f'Output_{window}d_mean'] = data['Output'].rolling(window=window).mean()
-        data[f'Output_{window}d_std'] = data['Output'].rolling(window=window).std()
+        data[f'Output_lag_{window}d_mean'] = data['Output'].rolling(window=window).mean()
+        data[f'Output_lag_{window}d_std'] = data['Output'].rolling(window=window).std()
 
     data.dropna(inplace=True)
     return data

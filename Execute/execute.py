@@ -27,6 +27,7 @@ from DL_Models.LSTM.lstm_tuning import tune_lstm_hyperparameters
 
 # Importing financial loss version 2
 from Algorithm.financial_loss_2 import execute_purchase_strategy_v2
+from Algorithm.financial_loss import execute_purchase_strategy
 
 
 def forecast_pipeline():
@@ -49,12 +50,11 @@ def forecast_pipeline():
     prophet_forecast = execute_prophet(features_dataset.copy(), prms.FORECASTING_DAYS)
     ets_predictions = execute_ets(features_dataset.copy(), prms.FORECASTING_DAYS)
     lstm_forecast = execute_lstm(features_dataset.copy(), prms.FORECASTING_DAYS, lstm_params)
-    xgboost_predictions, xgboost_forecast = execute_adaptive_xgboost(features_dataset.copy(), prms.FORECASTING_DAYS,
-                                                                     prms.xgboost_params_4Y)
+    execute_adaptive_xgboost(features_dataset.copy(), prms.FORECASTING_DAYS, prms.xgboost_params_4Y)
     lgbm_predictions, lgbm_forecast = execute_lgbm(processed_data.copy(), prms.FORECASTING_DAYS)
 
     'EXECUTE PURCHASE STRATEGY'
-    # execute_purchase_strategy(lgbm_predictions, actual_data, 10, 0, 400)
+    execute_purchase_strategy(lgbm_predictions, actual_data, 10, 0, 400)
     execute_purchase_strategy_v2(features_dataset.copy(), 23350, 40, prms.FORECASTING_DAYS)
 
 
