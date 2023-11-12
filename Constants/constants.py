@@ -13,3 +13,8 @@ correlation_methods = [evaluate_correlation_analysis, evaluate_spearman_correlat
 
 forecasting_models = [execute_adaptive_xgboost, execute_arima, execute_ets, execute_prophet, execute_lgbm,
                       execute_lstm]
+
+
+class Commodities:
+    COMMODITIES = "abc-commodities"
+    COTTON = "cotton"

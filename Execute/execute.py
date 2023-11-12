@@ -34,7 +34,7 @@ def forecast_pipeline():
     """Running the forecasting pipeling"""
 
     'Reading and Processing the data'
-    read_df = read_data()
+    read_df = read_data_s3(cts.Commodities.COMMODITIES, cts.Commodities.COTTON)
     processed_data = process_data_lagged(read_df, prms.FORECASTING_DAYS)
 
     'FEATURE ENGINEERING & SELECTION'
@@ -81,42 +81,39 @@ def standardize_dataset(df, date_column, num_columns):
     return df
 
 
-def read_data():
-    """Function to read and process the data."""
+def read_data_s3(bucket_name, folder_name):
+    """Function to read and process data from an S3 bucket folder."""
 
     def custom_date_parser(date_string):
         return pd.to_datetime(date_string, format='%d/%m/%y')
 
-    # data = pd.read_csv('../Data/Price_Data.csv', parse_dates=['Date'], date_parser=custom_date_parser)
-    files = ['../Data/Updated_Data_Cotton/Brazil Cotton Index.csv',
-             '../Data/Updated_Data_Cotton/China Cotton Futures.csv',
-             '../Data/Updated_Data_Cotton/Cotlook.csv', '../Data/Updated_Data_Cotton/IND Cotton Futures.csv',
-             '../Data/Updated_Data_Cotton/Spot Prices.csv', '../Data/Updated_Data_Cotton/US Cotton Futures.csv']
+    # AWS credentials
+    aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 
-    brazil_cotton_index = pd.read_csv('../Data/Updated_Data_Cotton/Brazil Cotton Index.csv', parse_dates=['Date'],
-                                      dayfirst=True)
-    china_cotton_index = pd.read_csv('../Data/Updated_Data_Cotton/China Cotton Futures.csv', parse_dates=['Date'],
-                                     dayfirst=True)
-    cotlook_index = pd.read_csv('../Data/Updated_Data_Cotton/Cotlook.csv', parse_dates=['Date'],
-                                dayfirst=True)
-    ind_cotton_index = pd.read_csv('../Data/Updated_Data_Cotton/IND Cotton Futures.csv', parse_dates=['Date'],
-                                   dayfirst=True)
-    spot_prices = pd.read_csv('../Data/Updated_Data_Cotton/Spot Prices.csv', parse_dates=['Date'],
-                              dayfirst=True)
-    us_cotton_index = pd.read_csv('../Data/Updated_Data_Cotton/US Cotton Futures.csv', parse_dates=['Date'],
-                                  dayfirst=True)
+    # Initialize S3 client
+    s3_client = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
 
-    datasets = [brazil_cotton_index, cotlook_index, ind_cotton_index, spot_prices, china_cotton_index,
-                us_cotton_index]
+    # List files in the specified folder
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=folder_name)
+    files = [item['Key'] for item in response['Contents'] if item['Key'].endswith('.csv')]
+
+    all_data = []
+    for file_key in files:
+        csv_obj = s3_client.get_object(Bucket=bucket_name, Key=file_key)
+        body = csv_obj['Body']
+        data = pd.read_csv(io.BytesIO(body.read()), parse_dates=['Date'], date_parser=custom_date_parser)
+        all_data.append(data)
 
     standardized_datasets = []
 
-    for df in datasets:
+    for df in all_data:
         standardized_df = standardize_dataset(df, 'Date', df.columns.drop('Date'))
         standardized_datasets.append(standardized_df)
 
-    all_dates = pd.date_range(start=spot_prices['Date'].min(),
+    all_dates = pd.date_range(start=min(df['Date'].min() for df in standardized_datasets),
                               end=max(df['Date'].max() for df in standardized_datasets))
+
     date_df = pd.DataFrame(all_dates, columns=['Date'])
     for df in standardized_datasets:
         date_df = pd.merge(date_df, df, on='Date', how='left')
@@ -127,35 +124,8 @@ def read_data():
     date_df['Date'] = date_column
     date_df = date_df[['Date'] + [col for col in date_df.columns if col != 'Date']]
 
-    # processed_data = process_data_lagged(data, prms.FORECASTING_DAYS)
-    # # cols_to_remove = (set(processed_data.columns) & set(data.columns)) - {"Output"}
-    # # processed_data = processed_data.drop(columns=cols_to_remove)
-    # test = processed_data['Output'][int(0.8 * len(processed_data)):]
-
     return date_df
 
 
-def read_data_s3(BUCKET_NAME, FILE_NAME):
-    """Function to read and process the data from an S3 bucket."""
-    def custom_date_parser(date_string):
-        return pd.to_datetime(date_string, format='%m/%d/%y')
-
-    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-    csv_obj = s3_client.get_object(Bucket=BUCKET_NAME, Key=FILE_NAME)
-    body = csv_obj['Body']
-
-    data = pd.read_csv(io.BytesIO(body.read()), parse_dates=['Date'], date_parser=custom_date_parser)
-
-    processed_data = process_data_lagged_rolling_stats(data, prms.FORECASTING_DAYS)
-    cols_to_remove = (set(processed_data.columns) & set(data.columns)) - {"Output"}
-    processed_data = processed_data.drop(columns=cols_to_remove)
-    test = processed_data['Output'][int(0.8 * len(processed_data)):]
-
-    return processed_data, test
-
-
-# load_dotenv()
+load_dotenv()
 forecast_pipeline()
