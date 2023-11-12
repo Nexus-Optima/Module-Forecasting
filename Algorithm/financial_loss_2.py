@@ -1,12 +1,12 @@
 import pandas as pd
 from Models.XG_Boost.adaptive_xgboost import execute_evaluation, execute_adaptive_xgboost
+from DL_Models.LSTM.LSTM import execute_lstm
 from Utils.process_data import process_data_lagged_rolling_stats
 import Constants.parameters as prms
 
 
-def execute_purchase_strategy_v2(data, dailyConsumption, maxDays, forecast_days):
-    actual_values, predictions, forecast = execute_adaptive_xgboost(data, forecast_days,
-                                                                    hyperparams=prms.xgboost_params_4Y)
+def execute_purchase_strategy_v2(raw_data, data, dailyConsumption, maxDays, forecast_days):
+    actual_values, predictions, forecast = execute_lstm(raw_data, data, forecast_days, prms.lstm_parameters_4Y)
 
     def optimum_purchase(pred):
         curStock = 0

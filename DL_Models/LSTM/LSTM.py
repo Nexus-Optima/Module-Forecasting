@@ -10,7 +10,7 @@ from DL_Models.LSTM.lstm_structure import LSTMModel
 from DL_Models.LSTM import lstm_utils
 
 
-def execute_lstm(data, forecast, hyperparameters):
+def execute_lstm(raw_data, data, forecast, hyperparameters):
     data = data.reset_index()
     data.drop(columns=['Date'], inplace=True)
     data.dropna(inplace=True)
@@ -54,9 +54,9 @@ def execute_lstm(data, forecast, hyperparameters):
     print(train_mse)
     print("Test rmse is ")
     print(test_mse)
-    raw_data = pd.read_csv("../Data/Price_Data.csv", dayfirst=True)
+    raw_data.reset_index(inplace=True)
     raw_data = process_data(raw_data)
-    future_dates = pd.date_range('2023-10-12', '2023-11-11')
+    future_dates = pd.date_range('2023-11-11', '2023-12-11')
     future_data = pd.DataFrame(index=future_dates)
     future_data.index.name = 'Date'
     combined_data = pd.concat([raw_data, future_data])
@@ -65,8 +65,7 @@ def execute_lstm(data, forecast, hyperparameters):
     combined_data = combined_data.last('4Y')
     combined_data = combined_data.reset_index()
     combined_data.drop(columns=['Date'], inplace=True)
-    # remove NaN values to perform proper scaling
-    combined_data.dropna(inplace=True)
+
     combined_data = combined_data[data.columns]
     scaled_forecast_data, future_data_min, future_data_max = lstm_utils.min_max_scaler(combined_data.values)
     forecast = []
@@ -101,4 +100,4 @@ def execute_lstm(data, forecast, hyperparameters):
     plt.tight_layout()
     plt.show()
 
-    return forecast_orig
+    return test_predictions_orig, y_test_orig, forecast_orig

@@ -60,7 +60,7 @@ def execute_evaluation(subset_data, hyperparams):
     return actual_values, predictions, trained_feature_order
 
 
-def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
+def execute_adaptive_xgboost(raw_data, subset_data, forecast_days, hyperparams):
     """
     Execute adaptive XGBoost on the given dataset to predict future values.
 
@@ -107,7 +107,7 @@ def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
             future_data.at[future_data.index[0], col] = subset_data.at[subset_data.index[-1], col]
 
     # Prepare the concatenated data for iterative prediction
-    concatenated_data = subset_data.copy()
+    complete_data = raw_data.copy()
 
     # Iterate over each forecast day and predict values
     for i in range(forecast_days):
@@ -126,19 +126,24 @@ def execute_adaptive_xgboost(subset_data, forecast_days, hyperparams):
         # Add the predicted row to concatenated data
         next_row = X_next.copy()
         next_row['Output'] = prediction[0]
-        concatenated_data = pd.concat([concatenated_data, next_row])
+
+        next_row_complete = complete_data.iloc[-1].copy()
+        next_row_complete.update(next_row.iloc[0])
+        next_row_complete['Output'] = prediction[0]
+
+        complete_data = pd.concat([complete_data, next_row_complete.to_frame().T])
 
         # If not the last iteration, update future_data with lagged values
         if i < forecast_days - 1:
-            concatenated_data.reset_index(inplace=True, drop=False)
-            concatenated_data.rename(columns={'index': 'Date'}, inplace=True)
-            concatenated_data = process_data_lagged(concatenated_data, forecast_days)
+            complete_data.reset_index(inplace=True, drop=False)
+            complete_data.rename(columns={'index': 'Date'}, inplace=True)
+            complete_data = process_data_lagged(complete_data, forecast_days)
 
-            next_day_row = concatenated_data.iloc[-1].copy()
+            prediction_data = complete_data[future_data.columns]
+
+            next_day_row = prediction_data.iloc[-1].copy()
             next_day_row = next_day_row[future_data.columns]
             future_data.iloc[i + 1] = next_day_row
-
-        print(future_data.to_string())
 
     past_dates = subset_data.index[window_size:window_size + len(predictions)]
     future_dates_list = future_data.index.tolist()

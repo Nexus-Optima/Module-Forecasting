@@ -5,7 +5,6 @@ def process_data(data):
     data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
     data.set_index('Date', inplace=True)
     data.sort_index(inplace=True)
-    data = data.ffill()
     return data
 
 
