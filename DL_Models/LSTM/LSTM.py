@@ -56,7 +56,9 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     print(test_mse)
     raw_data.reset_index(inplace=True)
     raw_data = process_data(raw_data)
-    future_dates = pd.date_range('2023-11-11', '2023-12-11')
+    future_dates = [raw_data.index[-1] + pd.Timedelta(days=i) for i in range(1, forecast + 1)]
+    # future_dates = pd.date_range('2023-11-11', '2023-11-26')
+    print(future_dates)
     future_data = pd.DataFrame(index=future_dates)
     future_data.index.name = 'Date'
     combined_data = pd.concat([raw_data, future_data])
