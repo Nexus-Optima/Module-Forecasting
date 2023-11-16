@@ -128,4 +128,3 @@ def read_data_s3(bucket_name, folder_name):
 
 
 load_dotenv()
-forecast_pipeline()
