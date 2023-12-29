@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 threshold = 0.5
 
@@ -7,7 +6,6 @@ threshold = 0.5
 def evaluate_correlation_analysis(data):
     correlation_matrix = data.corr()
     plt.figure(figsize=(15, 10))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
     plt.title("Correlation Analysis")
     plt.show()
 
