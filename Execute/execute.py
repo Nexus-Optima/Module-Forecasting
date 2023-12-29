@@ -123,7 +123,7 @@ def read_data_s3(bucket_name, folder_name):
     date_df = date_df[date_df['Date'].dt.dayofweek < 5]
     dates = date_df['Date']
     future_dates = pd.date_range(start=date_df['Date'].max(), periods=round(prms.FORECASTING_DAYS*1.5))
-    print(future_dates)
+    print(date_column)
     date_df.drop('Date', axis=1, inplace=True)
     date_df.interpolate(method='linear', inplace=True)
     date_df['Date'] = date_column
@@ -131,5 +131,6 @@ def read_data_s3(bucket_name, folder_name):
 
     return date_df
 
-
 load_dotenv()
+
+forecast_pipeline()
