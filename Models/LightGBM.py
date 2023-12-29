@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import lightgbm as lgb
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import matplotlib.pyplot as plt
 

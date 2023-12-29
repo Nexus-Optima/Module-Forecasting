@@ -10,12 +10,12 @@ from DL_Models.LSTM import lstm_utils
 
 
 def objective(trial, data):
-    learning_rate = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    learning_rate = trial.suggest_float("lr", 1e-4, 1e-1, log=True)
     num_layers = trial.suggest_int("num_layers", 1, 5)
-    hidden_size = trial.suggest_int("hidden_size", 50, 150, step=25)
+    hidden_size = trial.suggest_int("hidden_size", 10, 150, step=10)
     dropout = trial.suggest_float("dropout", 0.1, 0.5, step=0.1)
     weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-1, log=True)
-    num_epochs = trial.suggest_int("num_epochs", 100, 500, step=50)
+    num_epochs = trial.suggest_int("num_epochs", 200, 1000, step=50)
 
     hyperparameters = {'hidden_size': hidden_size, 'num_layers': num_layers, 'dropout': dropout}
 
@@ -49,6 +49,7 @@ def objective(trial, data):
     test_predictions = model(X_test_tensor).detach().numpy()
     test_predictions_orig = lstm_utils.inverse_min_max_scaler(test_predictions, data_min[0], data_max[0])
     y_test_orig = lstm_utils.inverse_min_max_scaler(y_test, data_min[0], data_max[0])
+    y_test_orig = np.reshape(y_test_orig, (-1,1))
     test_mse = np.mean((test_predictions_orig - y_test_orig) ** 2)
 
     return test_mse

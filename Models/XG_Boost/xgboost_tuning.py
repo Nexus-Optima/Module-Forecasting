@@ -41,11 +41,11 @@ def execute_evaluation(subset_data, hyperparams):
 
 def objective(trial, data):
     hyperparams = {
-        'n_estimators': trial.suggest_int("n_estimators", 50, 500),
-        'max_depth': trial.suggest_int("max_depth", 2, 10),
-        'learning_rate': trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True),
-        'subsample': trial.suggest_float("subsample", 0.5, 1),
-        'colsample_bytree': trial.suggest_float("colsample_bytree", 0.5, 1)
+        'n_estimators': trial.suggest_int("n_estimators", 25, 500),
+        'max_depth': trial.suggest_int("max_depth", 1, 18),
+        'learning_rate': trial.suggest_float("learning_rate", 1e-8, 1e-1, log=True),
+        'subsample': trial.suggest_float("subsample", 0.1, 1),
+        'colsample_bytree': trial.suggest_float("colsample_bytree", 0.1, 1)
     }
 
     actual_values, predictions = execute_evaluation(data, hyperparams)
@@ -58,7 +58,7 @@ def objective(trial, data):
     return mse
 
 
-def tune_xgboost_hyperparameters(data, n_trials=100):
+def tune_xgboost_hyperparameters(data, n_trials=10):
     study = optuna.create_study(direction="minimize")
     study.optimize(lambda trial: objective(trial, data), n_trials=n_trials)
 
