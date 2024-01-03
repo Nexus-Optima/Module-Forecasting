@@ -50,10 +50,10 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     y_test_orig = lstm_utils.inverse_min_max_scaler(y_test, data_min[0], data_max[0])
     train_mse = np.mean((train_predictions_orig - y_train_orig) ** 2)
     test_mse = np.mean((test_predictions_orig - y_test_orig) ** 2)
-    print("Train rmse is ")
-    print(train_mse)
-    print("Test rmse is ")
-    print(test_mse)
+    # print("Train rmse is ")
+    # print(train_mse)
+    # print("Test rmse is ")
+    # print(test_mse)
     raw_data.reset_index(inplace=True)
     raw_data = process_data(raw_data)
     future_dates = [raw_data.index[-1] + pd.Timedelta(days=i) for i in range(1, forecast + 1)]
@@ -64,34 +64,37 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     combined_data = process_data_lagged(combined_data, forecast)
     combined_data = combined_data.last('4Y')
     combined_data = combined_data.reset_index()
+    combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
+    dates = combined_data['Date']
     combined_data.drop(columns=['Date'], inplace=True)
 
     combined_data = combined_data[data.columns]
     scaled_forecast_data, future_data_min, future_data_max = lstm_utils.min_max_scaler(combined_data.values)
-    forecast = []
+    forecast_values = []
     last_data = scaled_data[-look_back:]
     # print(last_data)
     for i in range(len(future_data)):
         with torch.no_grad():
             model.eval()
             prediction = model(torch.FloatTensor(last_data[-look_back:].reshape(1, look_back, -2)))
-            forecast.append(prediction.item())
+            forecast_values.append(prediction.item())
             scaled_forecast_data[i - len(future_data)][0] = prediction.item()
             # remove NaN values to perform proper scaling
             new_row = scaled_forecast_data[i - len(future_data)]
             # print(last_data)
             # print(new_row)
             last_data = np.vstack([last_data, new_row])
-    forecast_orig = lstm_utils.inverse_min_max_scaler(np.array(forecast).reshape(-1, 1), future_data_min[0],
+    forecast_orig = lstm_utils.inverse_min_max_scaler(np.array(forecast_values).reshape(-1, 1), future_data_min[0],
                                                       future_data_max[0])
-    print(forecast_orig)
+    # print(forecast_orig)
+    print(dates[-1*len(forecast_orig):])
     all_actual = np.concatenate([y_train_orig, y_test_orig])
     all_predictions = np.concatenate([train_predictions_orig, test_predictions_orig])
     time_array = np.arange(len(all_actual) + len(forecast_orig))
     plt.figure(figsize=(16, 7))
-    plt.plot(time_array[:len(all_actual)], all_actual, label='Actual Values', color='blue')
-    plt.plot(time_array[:len(all_predictions)], all_predictions, label='Predicted Values', color='red', linestyle='--')
-    plt.plot(time_array[-len(forecast_orig):], forecast_orig, label='Forecasted Values', color='green', linestyle='-.')
+    plt.plot(dates[:len(all_actual)], all_actual, label='Actual Values', color='blue')
+    plt.plot(dates[:len(all_predictions)], all_predictions, label='Predicted Values', color='red', linestyle='--')
+    plt.plot(dates[-1*len(forecast_orig):], forecast_orig, label='Forecasted Values', color='green', linestyle='-.')
     plt.title('Actual vs. Predicted vs. Forecasted Values')
     plt.xlabel('Time Steps')
     plt.ylabel('Output Values')
