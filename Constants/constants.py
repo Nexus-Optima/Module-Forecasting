@@ -16,5 +16,5 @@ forecasting_models = [execute_adaptive_xgboost, execute_arima, execute_ets, exec
 
 
 class Commodities:
-    COMMODITIES = "b3llcurve-commodities"
+    COMMODITIES = "commodities-data"
     COTTON = "cotton"
