@@ -6,7 +6,7 @@ import Constants.parameters as prms
 
 
 def execute_purchase_strategy_v2(raw_data, data, dailyConsumption, maxDays, forecast_days):
-    actual_values, predictions, forecast = execute_lstm(raw_data, data, forecast_days, prms.lstm_parameters_4Y)
+    actual_values, predictions, forecast = execute_lstm(raw_data, data, forecast_days, prms.lstm_parameters_4Y_15D)
 
     def optimum_purchase(pred):
         curStock = 0
