@@ -81,8 +81,6 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
             scaled_forecast_data[i - len(future_data)][0] = prediction.item()
             # remove NaN values to perform proper scaling
             new_row = scaled_forecast_data[i - len(future_data)]
-            # print(last_data)
-            # print(new_row)
             last_data = np.vstack([last_data, new_row])
     forecast_orig = lstm_utils.inverse_min_max_scaler(np.array(forecast_values).reshape(-1, 1), future_data_min[0],
                                                       future_data_max[0])
