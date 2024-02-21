@@ -85,7 +85,6 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     forecast_orig = lstm_utils.inverse_min_max_scaler(np.array(forecast_values).reshape(-1, 1), future_data_min[0],
                                                       future_data_max[0])
     # print(forecast_orig)
-    print(dates[-1*len(forecast_orig):])
     all_actual = np.concatenate([y_train_orig, y_test_orig])
     all_predictions = np.concatenate([train_predictions_orig, test_predictions_orig])
     time_array = np.arange(len(all_actual) + len(forecast_orig))
@@ -101,4 +100,22 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     plt.tight_layout()
     plt.show()
 
-    return test_predictions_orig, y_test_orig, forecast_orig
+    test_dates = dates[-len(y_test_orig):]  # Adjust this according to how you've split your dates
+
+    # Map test predictions with dates
+    test_predictions_df = pd.DataFrame({
+        'Date': test_dates,
+        'Test Predictions': test_predictions_orig.flatten()  # Flatten in case it's not a 1D array
+    })
+    y_test_orig_df = pd.DataFrame({
+        'Date': test_dates,
+        'Actual Values': y_test_orig.flatten()  # Flatten in case it's not a 1D array
+    })
+
+    forecast_dates = pd.date_range(start=test_dates.iloc[-1] + pd.Timedelta(days=1), periods=len(forecast_orig))
+    forecast_orig_df = pd.DataFrame({
+        'Date': forecast_dates,
+        'Forecast Values': forecast_orig.flatten()  # Flatten in case it's not a 1D array
+    })
+
+    return test_predictions_df, y_test_orig_df, forecast_orig_df

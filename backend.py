@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 import matplotlib
 from Execute.execute import forecast_pipeline
 import threading
@@ -8,12 +8,16 @@ app = Flask(__name__)
 matplotlib.use("Agg")
 
 
-@app.route('/forecast', methods=['GET'])
+@app.route('/forecast', methods=['POST'])
 def forecast():
     try:
-        thread = threading.Thread(target=forecast_pipeline)
+        data = request.json
+        commodity_name = data.get('commodity_name')
+        if not commodity_name:
+            return jsonify({"error": "commodity_name is required in the request body"}), 400
+        thread = threading.Thread(target=forecast_pipeline, args=commodity_name)
         thread.start()
-        return jsonify({"message": "Forecasting started"}), 202
+        return jsonify({"message": "Forecasting started for " + commodity_name}), 202
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

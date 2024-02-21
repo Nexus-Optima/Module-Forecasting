@@ -7,11 +7,19 @@ from Models.Arima import execute_arima
 
 from DL_Models.LSTM.LSTM import execute_lstm
 
+import os
+
 correlation_methods = [evaluate_correlation_analysis, evaluate_spearman_correlation_analysis]
 
 forecasting_models = [execute_adaptive_xgboost, execute_arima, execute_ets, execute_lstm]
 
 
 class Commodities:
-    COMMODITIES = "commodities-data"
+    COMMODITIES = "b3llcurve-commodities"
+    FORECAST_STORAGE = "b3llcurve-forecast-storage"
     COTTON = "cotton"
+
+
+class Credentials:
+    aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
