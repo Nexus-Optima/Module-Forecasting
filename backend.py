@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import matplotlib
 
-from Execute.execute import forecast_pipeline
+from Execute.execute import forecast_pipeline, fetch_all_model_details
 from Database.s3_operations import read_forecast
 from News_Insights.news import fetch_news
 
@@ -53,13 +53,19 @@ def get_news_by_commodity(commodity_name):
         return jsonify({'error': str(e)}), 500
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
-
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "healthy"}), 200
+
+
+@app.route('/get_model_details', methods=['GET'])
+def get_model_details():
+    """Flask route to get model details from DynamoDB."""
+    items = fetch_all_model_details()
+    if items is not None:
+        return jsonify(items)
+    else:
+        return jsonify({"error": "Failed to retrieve data"}), 500
 
 
 if __name__ == '__main__':
