@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import matplotlib
+from flask_cors import CORS
 
 from Execute.execute import forecast_pipeline, fetch_all_model_details
 from Database.s3_operations import read_forecast
@@ -8,6 +9,7 @@ from News_Insights.news import fetch_news
 import threading
 
 app = Flask(__name__)
+CORS(app)
 
 matplotlib.use("Agg")
 

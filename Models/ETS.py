@@ -5,7 +5,7 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from sklearn.metrics import mean_squared_error
 
 
-def execute_ets(data, forecast_days):
+def execute_ets(raw_data, data, forecast_days, hyperparameters):
     data.sort_index(inplace=True)
     Q1 = data['Output'].quantile(0.25)
     Q3 = data['Output'].quantile(0.75)
@@ -41,4 +41,4 @@ def execute_ets(data, forecast_days):
     plt.tight_layout()
     plt.show()
 
-    return predictions
+    return predictions, forecast_next_100_days,rmse
