@@ -21,8 +21,10 @@ from decimal import Decimal
 
 # Importing different modeling approaches.
 from Models.XG_Boost.adaptive_xgboost import execute_adaptive_xgboost
+# from Models.LightGBM.LGBM import execute_LGBM
 from Models.ETS import execute_ets
 from Models.SARIMAX import execute_sarimax
+from Models.Arima import execute_arima
 from DL_Models.LSTM.LSTM import execute_lstm
 
 load_dotenv()
@@ -89,7 +91,39 @@ def forecast_pipeline(commodity_name):
                 'hyperparameters': prms.lstm_parameters_4Y_30D
             }
         },
+        'ETS':{
+            'func': execute_ets,  # This should directly reference the function, not a string or anything else.
+            'params': {
+                'forecast': prms.FORECASTING_DAYS,
+                'hyperparameters': prms.lstm_parameters_4Y_30D
+            }
         # Make sure other models are added here similarly.
+    },
+        'XGBoost': {
+            'func': execute_adaptive_xgboost,  # This should directly reference the function, not a string or anything else.
+            'params': {
+                'forecast': prms.FORECASTING_DAYS,
+                'hyperparameters': prms.xgboost_params_2Y
+            }
+            # Make sure other models are added here similarly.
+        },
+        'ARIMA': {
+            'func': execute_arima,
+            # This should directly reference the function, not a string or anything else.
+            'params': {
+                'forecast': prms.FORECASTING_DAYS,
+                'hyperparameters': prms.xgboost_params_2Y
+            }
+            # Make sure other models are added here similarly.
+        },
+        # 'LGBM': {
+        #     'func': execute_LGBM,  # This should directly reference the function, not a string or anything else.
+        #     'params': {
+        #         'forecast': prms.FORECASTING_DAYS,
+        #         'hyperparameters': prms.xgboost_params_2Y
+        #     }
+            # Make sure other models are added here similarly.
+        #}
     }
 
     all_model_details = []
@@ -100,7 +134,7 @@ def forecast_pipeline(commodity_name):
     for model_name, model_info in models.items():
         model_func = model_info['func']
         params = model_info['params']
-        predictions, y_test, forecast_outputs, accuracy = execute_model(
+        predictions, forecast_outputs, accuracy = execute_model(
             model_func, read_df, features_dataset, params['forecast'], params['hyperparameters']
         )
         model_details = {
@@ -122,8 +156,9 @@ def execute_model(model_func, raw_data, processed_data, forecast, hyperparameter
     General function to execute any model with the given data, forecast period, and hyperparameters.
     Assumes model_func is a callable that matches this signature.
     """
-    predictions, y_test, forecast_results, accuracy = model_func(raw_data, processed_data, forecast, hyperparameters)
-    return predictions, y_test, forecast_results, accuracy
+    predictions, forecast_results, accuracy = model_func(raw_data, processed_data, forecast, hyperparameters)
+    print(len(predictions))
+    return predictions, forecast_results, accuracy
 
 
 def fetch_all_model_details():
@@ -142,3 +177,4 @@ def fetch_all_model_details():
     except Exception as e:
         print(f"Failed to fetch model details from DynamoDB: {e}")
         return None
+forecast_pipeline('cotton')
