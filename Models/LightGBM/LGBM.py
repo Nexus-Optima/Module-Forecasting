@@ -1,4 +1,6 @@
-import xgboost as xgb
+import os
+os.environ['DYLD_LIBRARY_PATH'] = 'usr/local/opt/homebrew/Cellar/libomp/18.1.4'  # Replace with your actual path
+import lightgbm as lgb
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import pandas as pd
 import numpy as np
@@ -21,16 +23,18 @@ def execute_evaluation(subset_data, hyperparams):
     actual_values = []
     window_size = int(0.5 * len(subset_data))
 
-    model = xgb.XGBRegressor(
+    model = lgb.LGBMRegressor(
         n_estimators=hyperparams['n_estimators'],
         max_depth=hyperparams['max_depth'],
         learning_rate=hyperparams['learning_rate'],
-        subsample=hyperparams['subsample'],
-        colsample_bytree=hyperparams['colsample_bytree'],
-        n_jobs=-1,
-        objective='reg:squarederror',
-        random_state=42,
-        early_stopping_rounds=50
+        boosting_type= 'dart',
+        num_leaves=2**4
+       # subsample=hyperparams['subsample'],
+       # colsample_bytree=hyperparams['colsample_bytree'],
+       # n_jobs=-1,
+       # objective='reg:squarederror',
+       # random_state=42,
+       # early_stopping_rounds=50
     )
 
     # Moving window approach to train and validate the model
@@ -55,13 +59,13 @@ def execute_evaluation(subset_data, hyperparams):
 
     plot_graph(subset_data.index[window_size:window_size + len(predictions)], actual_values, predictions)
 
-    XGB_rmse = np.sqrt(mean_squared_error(actual_values, predictions))
+    LGBM_rmse = np.sqrt(mean_squared_error(actual_values, predictions))
     print(mean_absolute_error(actual_values, predictions))
 
-    return actual_values, predictions, trained_feature_order, XGB_rmse
+    return actual_values, predictions, trained_feature_order, LGBM_rmse
 
 
-def execute_adaptive_xgboost(raw_data, subset_data, forecast_days, hyperparams):
+def execute_LGBM(raw_data, subset_data, forecast_days, hyperparams):
     """
     Execute adaptive XGBoost on the given dataset to predict future values.
 
@@ -77,7 +81,7 @@ def execute_adaptive_xgboost(raw_data, subset_data, forecast_days, hyperparams):
     window_size = int(0.5 * len(subset_data))
 
     # Retrieve actual values and predictions for the subset data
-    actual_values, predictions, feature_order, XGB_rmse = execute_evaluation(subset_data, hyperparams)
+    actual_values, predictions, feature_order, LGBM_rmse = execute_evaluation(subset_data, hyperparams)
 
     # Split the data into training sets
     train_data = subset_data[-window_size:]
@@ -85,16 +89,18 @@ def execute_adaptive_xgboost(raw_data, subset_data, forecast_days, hyperparams):
     X_train = X_train[[col for col in X_train.columns if '_lag' in col]]
 
     # Initialize the XGBoost model
-    model_future = xgb.XGBRegressor(
+    model_future = lgb.LGBMRegressor(
         n_estimators=hyperparams['n_estimators'],
         max_depth=hyperparams['max_depth'],
         learning_rate=hyperparams['learning_rate'],
-        subsample=hyperparams['subsample'],
-        colsample_bytree=hyperparams['colsample_bytree'],
-        n_jobs=-1,
-        objective='reg:squarederror',
-        random_state=42,
-        early_stopping_rounds=50
+        boosting_type='dart',
+        num_leaves=2 ** 4
+        # subsample=hyperparams['subsample'],
+        # colsample_bytree=hyperparams['colsample_bytree'],
+        # n_jobs=-1,
+        # objective='reg:squarederror',
+        # random_state=42,
+        # early_stopping_rounds=50
     )
     model_future.fit(X_train, y_train, eval_set=[(X_train, y_train)])
 
@@ -153,4 +159,4 @@ def execute_adaptive_xgboost(raw_data, subset_data, forecast_days, hyperparams):
 
     print(future_data['Output'])
 
-    return predictions, future_data['Output'], XGB_rmse
+    return predictions, future_data['Output'], LGBM_rmse

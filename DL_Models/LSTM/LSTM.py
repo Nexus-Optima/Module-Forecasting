@@ -4,6 +4,7 @@ import pandas as pd
 import torch.optim as optim
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from Utils.process_data import process_data, process_data_lagged
 from DL_Models.LSTM.lstm_structure import LSTMModel
@@ -49,11 +50,8 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     test_predictions_orig = lstm_utils.inverse_min_max_scaler(test_predictions, data_min[0], data_max[0])
     y_test_orig = lstm_utils.inverse_min_max_scaler(y_test, data_min[0], data_max[0])
     train_mse = np.mean((train_predictions_orig - y_train_orig) ** 2)
-    test_mse = np.mean((test_predictions_orig - y_test_orig) ** 2)
-    # print("Train rmse is ")
-    # print(train_mse)
-    # print("Test rmse is ")
-    # print(test_mse)
+    # test_rmse = np.sqrt(np.mean((test_predictions_orig - y_test_orig) ** 2))
+    test_rmse = np.sqrt(mean_squared_error(y_test_orig, test_predictions_orig))
     raw_data.reset_index(inplace=True)
     raw_data = process_data(raw_data)
     future_dates = [raw_data.index[-1] + pd.Timedelta(days=i) for i in range(1, forecast + 1)]
@@ -118,4 +116,4 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
         'Forecast Values': forecast_orig.flatten()  # Flatten in case it's not a 1D array
     })
 
-    return test_predictions_df, y_test_orig_df, forecast_orig_df
+    return test_predictions_df, forecast_orig_df, test_rmse
