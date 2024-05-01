@@ -1,18 +1,24 @@
 from flask import Flask, request, jsonify
 import matplotlib
 from flask_cors import CORS
-
+from datetime import datetime
 from Execute.execute import forecast_pipeline, fetch_all_model_details
 from Database.s3_operations import read_forecast
 from News_Insights.news import fetch_news
+import pandas as pd
+
 
 import threading
 
 app = Flask(__name__)
-CORS(app)
+cors = CORS(app)
 
 matplotlib.use("Agg")
 
+
+
+def format_date(date):
+    return date.strftime('%Y-%m-%d')
 
 @app.route('/forecast', methods=['POST'])
 def forecast():
@@ -35,10 +41,30 @@ def get_forecast(commodity_name):
             return jsonify({"error": "commodity_name is required as a URL parameter"}), 400
 
         forecast_data = read_forecast(commodity_name)
+
+         # Rename the 'Actual' column to 'Values'
+        forecast_data['actual'].rename(columns={'Actual Values': 'value'}, inplace=True)
+        
+        
+        forecast_data['actual']['Date'] = forecast_data['actual']['Date'].apply(format_date)
+        forecast_data['forecast']['Date'] = forecast_data['forecast']['Date'].apply(format_date)
+
+        forecast_data['actual'].rename(columns={'Date': 'time'}, inplace=True)
+        
+        actual_data = forecast_data['actual'].to_dict(orient='records')
+        # Transform 'actual_data' list to match the desired format
+        initial_data = [{"time": data["time"], "value": data["value"]} for data in actual_data]
+
         return jsonify({
-            "actual": forecast_data['actual'].to_dict(orient='records'),
+            "initialData": initial_data,
             "forecast": forecast_data['forecast'].to_dict(orient='records')
         }), 200
+    
+        # return jsonify({
+        #     "actual": forecast_data['actual'].to_dict(orient='records'),
+        #     "forecast": forecast_data['forecast'].to_dict(orient='records')
+            
+        # }), 200  
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -52,8 +78,7 @@ def get_news_by_commodity(commodity_name):
         news_data = fetch_news(commodity_name)
         return jsonify(news_data)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+        return jsonify({'error': str(e)}), 500 
 
 @app.route('/health', methods=['GET'])
 def health():
