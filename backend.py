@@ -67,7 +67,6 @@ def get_news_by_commodity(commodity_name):
 def health():
     return jsonify({"status": "healthy"}), 200
 
-
 @app.route('/get_model_details', methods=['GET'])
 def get_model_details():
     """Flask route to get model details from DynamoDB."""
@@ -76,7 +75,6 @@ def get_model_details():
         return jsonify(items)
     else:
         return jsonify({"error": "Failed to retrieve data"}), 500
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True)
