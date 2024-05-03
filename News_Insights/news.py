@@ -19,6 +19,7 @@ def fetch_news(commodity):
         'q': commodity  # Using 'q' parameter to filter news by the commodity name
     }
     response = requests.get(url, params=params)
+
     if response.status_code == 200:
         return response.json()
     else:
