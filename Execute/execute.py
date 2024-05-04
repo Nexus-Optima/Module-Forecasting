@@ -177,4 +177,3 @@ def fetch_all_model_details():
     except Exception as e:
         print(f"Failed to fetch model details from DynamoDB: {e}")
         return None
-forecast_pipeline('cotton')
