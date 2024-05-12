@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import matplotlib
 from flask_cors import CORS
-from Execute.execute import forecast_pipeline, fetch_all_model_details
+from Utils.model_details import fetch_all_model_details
 from Database.s3_operations import read_forecast
 from News_Insights.news import fetch_news
 import threading
@@ -13,20 +13,6 @@ matplotlib.use("Agg")
 
 def format_date(date):
     return date.strftime('%Y-%m-%d')
-
-
-@application.route('/forecast', methods=['POST'])
-def forecast():
-    try:
-        data = request.json
-        commodity_name = data.get('commodity_name')
-        if not commodity_name:
-            return jsonify({"error": "commodity_name is required in the request body"}), 400
-        thread = threading.Thread(target=forecast_pipeline, args=commodity_name)
-        thread.start()
-        return jsonify({"message": "Forecasting started for " + commodity_name}), 202
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 @application.route('/get-forecast/<commodity_name>', methods=['GET'])
