@@ -1,5 +1,5 @@
 boto3==1.28.85
-Flask==2.2.3
+Flask==3.0.3
 Flask_Cors==4.0.0
 matplotlib==3.7.4
 pandas==1.5.3
