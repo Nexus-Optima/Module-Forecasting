@@ -40,7 +40,6 @@ def read_forecast(commodity_name, forecast_type):
                     file_type = 'predictions'
                 else:
                     file_type = 'forecast'
-                print(file_key)
               #  file_type = 'actual' if 'actual' in file_key else 'forecast'
                 data_files[file_type] = data
         if len(data_files) < 2:
