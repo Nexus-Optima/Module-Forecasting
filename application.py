@@ -22,12 +22,13 @@ def get_forecast_micro(commodity_name):
             return jsonify({"error": "commodity_name is required as a URL parameter"}), 400
 
         forecast_data = read_forecast(commodity_name, 'micro')
-
         forecast_data['actual']['Date'] = forecast_data['actual']['Date'].apply(format_date)
+        forecast_data['predictions']['Date'] = forecast_data['predictions']['Date'].apply(format_date)
         forecast_data['forecast']['Date'] = forecast_data['forecast']['Date'].apply(format_date)
 
         return jsonify({
             "actual": forecast_data['actual'].to_dict(orient='records'),
+            "predictions": forecast_data['predictions'].to_dict(orient='records'),
             "forecast": forecast_data['forecast'].to_dict(orient='records'),
         }), 200
     except Exception as e:
@@ -41,12 +42,13 @@ def get_forecast_macro(commodity_name):
             return jsonify({"error": "commodity_name is required as a URL parameter"}), 400
 
         forecast_data = read_forecast(commodity_name, 'macro')
-
         forecast_data['actual']['Date'] = forecast_data['actual']['Date'].apply(format_date)
+        forecast_data['predictions']['Date'] = forecast_data['predictions']['Date'].apply(format_date)
         forecast_data['forecast']['Date'] = forecast_data['forecast']['Date'].apply(format_date)
 
         return jsonify({
             "actual": forecast_data['actual'].to_dict(orient='records'),
+            "predictions": forecast_data['predictions'].to_dict(orient='records'),
             "forecast": forecast_data['forecast'].to_dict(orient='records'),
         }), 200
     except Exception as e:

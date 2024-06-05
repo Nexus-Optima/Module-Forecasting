@@ -34,10 +34,16 @@ def read_forecast(commodity_name, forecast_type):
                 data = pd.read_json(io.BytesIO(json_obj['Body'].read()), orient='records')
 
                 # Identify the type of file (actual or forecast)
-                file_type = 'actual' if 'actual' in file_key else 'forecast'
+                if 'actual' in file_key:
+                    file_type = 'actual'
+                elif 'prediction' in file_key:
+                    file_type = 'predictions'
+                else:
+                    file_type = 'forecast'
+                print(file_key)
+              #  file_type = 'actual' if 'actual' in file_key else 'forecast'
                 data_files[file_type] = data
-
-        if len(data_files) != 2:
+        if len(data_files) < 2:
             raise Exception("Expected both actual and forecast files.")
 
         return data_files
