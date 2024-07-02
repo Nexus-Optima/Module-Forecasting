@@ -22,38 +22,14 @@ def get_forecast_micro(commodity_name):
             return jsonify({"error": "commodity_name is required as a URL parameter"}), 400
 
         forecast_data = read_forecast(commodity_name, 'micro')
-
-        # Format dates for each period
-        for period in forecast_data:
-            for key in forecast_data[period]:
-                if forecast_data[period][key] is not None:
-                    forecast_data[period][key]['Date'] = forecast_data[period][key]['Date'].apply(format_date)
+        forecast_data['actual']['Date'] = forecast_data['actual']['Date'].apply(format_date)
+        forecast_data['predictions']['Date'] = forecast_data['predictions']['Date'].apply(format_date)
+        forecast_data['forecast']['Date'] = forecast_data['forecast']['Date'].apply(format_date)
 
         return jsonify({
-            "7D": {
-                "actual": forecast_data['7D']['actual'].to_dict(orient='records') if forecast_data['7D'][
-                                                                                         'actual'] is not None else [],
-                "predictions": forecast_data['7D']['predictions'].to_dict(orient='records') if forecast_data['7D'][
-                                                                                                   'predictions'] is not None else [],
-                "forecast": forecast_data['7D']['forecast'].to_dict(orient='records') if forecast_data['7D'][
-                                                                                             'forecast'] is not None else []
-            },
-            "15D": {
-                "actual": forecast_data['15D']['actual'].to_dict(orient='records') if forecast_data['15D'][
-                                                                                          'actual'] is not None else [],
-                "predictions": forecast_data['15D']['predictions'].to_dict(orient='records') if forecast_data['15D'][
-                                                                                                    'predictions'] is not None else [],
-                "forecast": forecast_data['15D']['forecast'].to_dict(orient='records') if forecast_data['15D'][
-                                                                                              'forecast'] is not None else []
-            },
-            "30D": {
-                "actual": forecast_data['30D']['actual'].to_dict(orient='records') if forecast_data['30D'][
-                                                                                          'actual'] is not None else [],
-                "predictions": forecast_data['30D']['predictions'].to_dict(orient='records') if forecast_data['30D'][
-                                                                                                    'predictions'] is not None else [],
-                "forecast": forecast_data['30D']['forecast'].to_dict(orient='records') if forecast_data['30D'][
-                                                                                              'forecast'] is not None else []
-            }
+            "actual": forecast_data['actual'].to_dict(orient='records'),
+            "predictions": forecast_data['predictions'].to_dict(orient='records'),
+            "forecast": forecast_data['forecast'].to_dict(orient='records'),
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
