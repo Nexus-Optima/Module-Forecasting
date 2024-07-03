@@ -15,13 +15,13 @@ def format_date(date):
     return date.strftime('%Y-%m-%d')
 
 
-@application.route('/get-forecast/<commodity_name>/micro', methods=['GET'])
-def get_forecast_micro(commodity_name):
+@application.route('/get-forecast/<commodity_name>/micro/<forecast_day>', methods=['GET'])
+def get_forecast_micro(commodity_name,forecast_day):
     try:
         if not commodity_name:
             return jsonify({"error": "commodity_name is required as a URL parameter"}), 400
 
-        forecast_data = read_forecast(commodity_name, 'micro')
+        forecast_data = read_forecast(commodity_name, 'micro', forecast_day)
         forecast_data['actual']['Date'] = forecast_data['actual']['Date'].apply(format_date)
         forecast_data['predictions']['Date'] = forecast_data['predictions']['Date'].apply(format_date)
         forecast_data['forecast']['Date'] = forecast_data['forecast']['Date'].apply(format_date)
@@ -88,4 +88,4 @@ def get_model_details():
 
 
 if __name__ == '__main__':
-    application.run(host="0.0.0.0", debug=True)
+    application.run(host="0.0.0.0", port=5001,debug=True)

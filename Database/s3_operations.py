@@ -5,7 +5,7 @@ import io
 import boto3
 
 
-def read_forecast(commodity_name, forecast_type):
+def read_forecast(commodity_name, forecast_type, forecast_day):
     """
     Fetches and reads the forecast and actual values from S3 for a given commodity.
 
@@ -15,7 +15,7 @@ def read_forecast(commodity_name, forecast_type):
     Returns:
     - A dictionary containing pandas DataFrames for the actual and forecast data.
     """
-    folder_name = f'{commodity_name}/{forecast_type}'  # Use the commodity name directly as the folder name
+    folder_name = f'{commodity_name}/{forecast_type}/{forecast_day}'  # Use the commodity name directly as the folder name
 
     try:
         s3_client = boto3.client('s3', aws_access_key_id=Credentials.aws_access_key_id,
